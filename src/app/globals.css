@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/*
+  Design tokens — Gestionale Studio Nutrizione
+  Palette pensata per uno studio professionale: calda ma seria,
+  non clinica-fredda, non "wellness pastello". Il verde pino scuro
+  della sidebar richiama concentrazione e cura; l'accento terracotta
+  è usato con moderazione solo per le azioni principali.
+*/
+
+:root {
+  --color-canvas: #f6f4ee;      /* sfondo pagina, avorio caldo */
+  --color-surface: #ffffff;      /* superficie card */
+  --color-ink: #20261f;          /* testo principale, verde-antracite */
+  --color-muted: #6f7568;        /* testo secondario */
+  --color-line: #e4e0d3;         /* bordi hairline */
+
+  --color-pine: #16261e;         /* sidebar */
+  --color-pine-light: #24382d;   /* hover sidebar */
+  --color-pine-text: #e9ece5;    /* testo su sidebar */
+  --color-pine-text-muted: #9fab9c;
+
+  --color-accent: #ad5330;       /* azione primaria (CTA) */
+  --color-accent-hover: #8f4326;
+
+  --color-status-pending: #b8862c;   /* da confermare */
+  --color-status-pending-bg: #f6ecd8;
+  --color-status-confirmed: #2f6b4f; /* confermato */
+  --color-status-confirmed-bg: #e4efe7;
+  --color-status-done: #5b6258;      /* completato */
+  --color-status-done-bg: #ecebe5;
+  --color-status-cancelled: #a04a3a; /* annullato */
+  --color-status-cancelled-bg: #f3e4df;
+}
+
+@theme inline {
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-muted: var(--color-muted);
+  --color-line: var(--color-line);
+  --color-pine: var(--color-pine);
+  --color-pine-light: var(--color-pine-light);
+  --color-pine-text: var(--color-pine-text);
+  --color-pine-text-muted: var(--color-pine-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --font-display: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
