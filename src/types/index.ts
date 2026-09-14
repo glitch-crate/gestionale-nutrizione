@@ -52,3 +52,19 @@ export interface StudioSettings {
   timezone: string;
   defaultSlotMinutes: number;
 }
+
+// Portale cliente
+export interface AvailableSlot {
+  slotStart: string; // ISO datetime
+  slotEnd: string; // ISO datetime
+  durationMinutes: number;
+  appointmentTypeName: string;
+}
+
+export interface MyAppointment {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  status: AppointmentStatus;
+  appointmentTypeName?: string;
+}

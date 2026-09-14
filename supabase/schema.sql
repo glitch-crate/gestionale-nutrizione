@@ -205,3 +205,26 @@ create policy "appointments_all_own_studio"
 --
 -- insert into professionals (studio_id, auth_user_id, full_name) values
 --   ('11111111-1111-1111-1111-111111111111', '<AUTH_USER_ID_QUI>', 'Nome Cognome');
+
+-- ============================================================
+-- AGGIORNAMENTO — Portale cliente (self-service, sola prenotazione)
+-- ============================================================
+-- Le migrazioni sotto sono già state applicate al progetto Supabase
+-- reale tramite il connettore MCP. Questo file resta il riferimento
+-- "sorgente di verità" dello schema, per chi volesse ricreare il
+-- database da zero (es. un ambiente di staging separato in futuro).
+--
+-- Novità:
+-- * clients.auth_user_id — collega (facoltativamente) un cliente
+--   a un account Supabase Auth, per l'accesso al portale.
+-- * studio_settings.opening_hours — orari di apertura configurabili
+--   (chiave = giorno ISO 1-7, valore = elenco di fasce orarie).
+-- * appointments.created_by — 'professionista' oppure 'cliente'.
+-- * Due tipi di appuntamento con durate diverse: "Primo incontro"
+--   (45 min, per chi non ha mai avuto un appuntamento) e "Controllo"
+--   (20 min, per i clienti con almeno un appuntamento pregresso).
+-- * Funzioni: register_client(), get_available_slots(), book_appointment()
+--   — vedi il file delle migrazioni Supabase per il codice completo.
+--   Il cliente NON può mai cancellare o spostare un appuntamento:
+--   solo il professionista ha questo privilegio (nessuna policy di
+--   UPDATE/DELETE concessa ai clienti su `appointments`).
