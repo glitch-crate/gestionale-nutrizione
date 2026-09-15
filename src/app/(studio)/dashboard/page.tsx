@@ -2,16 +2,29 @@ import Link from "next/link";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AppointmentRow } from "@/components/dashboard/AppointmentRow";
 import {
-  mockClients,
-  mockFreeSlotsToday,
-  mockTodayAppointments,
-  mockUpcomingAppointments,
-} from "@/lib/mock-data";
+  getClientCount,
+  getClients,
+  getFreeSlotsCountToday,
+  getTodayAppointments,
+  getUpcomingAppointments,
+} from "@/lib/queries";
 
-export default function DashboardPage() {
-  const todayCount = mockTodayAppointments.filter(
-    (a) => a.status !== "annullato",
-  ).length;
+export default async function DashboardPage() {
+  const [todayAppointments, upcomingAppointments, clientCount, freeSlotsToday, recentClients] =
+    await Promise.all([
+      getTodayAppointments(),
+      getUpcomingAppointments(5),
+      getClientCount(),
+      getFreeSlotsCountToday(),
+      getClients(),
+    ]);
+
+  const todayCount = todayAppointments.filter((a) => a.status !== "annullato").length;
+  const todayLabel = new Date().toLocaleDateString("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -21,11 +34,11 @@ export default function DashboardPage() {
             Buongiorno
           </h1>
           <p className="mt-1 text-[15px] text-[var(--color-muted)]">
-            Ecco la situazione di oggi, 12 settembre.
+            Ecco la situazione di oggi, {todayLabel}.
           </p>
         </div>
         <Link
-          href="/appuntamenti"
+          href="/appuntamenti/nuovo"
           className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
         >
           + Nuovo appuntamento
@@ -34,9 +47,9 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Appuntamenti oggi" value={todayCount} />
-        <StatCard label="Slot liberi oggi" value={mockFreeSlotsToday} />
-        <StatCard label="Prossimi 7 giorni" value={mockUpcomingAppointments.length} />
-        <StatCard label="Clienti totali" value={mockClients.length} />
+        <StatCard label="Slot liberi oggi" value={freeSlotsToday} />
+        <StatCard label="Prossimi 7 giorni" value={upcomingAppointments.length} />
+        <StatCard label="Clienti totali" value={clientCount} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -45,9 +58,15 @@ export default function DashboardPage() {
             Agenda di oggi
           </h2>
           <div className="mt-2">
-            {mockTodayAppointments.map((appointment) => (
-              <AppointmentRow key={appointment.id} appointment={appointment} />
-            ))}
+            {todayAppointments.length === 0 ? (
+              <p className="py-3 text-[15px] text-[var(--color-muted)]">
+                Nessun appuntamento oggi.
+              </p>
+            ) : (
+              todayAppointments.map((appointment) => (
+                <AppointmentRow key={appointment.id} appointment={appointment} />
+              ))
+            )}
           </div>
         </div>
 
@@ -56,9 +75,15 @@ export default function DashboardPage() {
             Prossimi appuntamenti
           </h2>
           <div className="mt-2">
-            {mockUpcomingAppointments.map((appointment) => (
-              <AppointmentRow key={appointment.id} appointment={appointment} showDate />
-            ))}
+            {upcomingAppointments.length === 0 ? (
+              <p className="py-3 text-[15px] text-[var(--color-muted)]">
+                Nessun appuntamento in programma.
+              </p>
+            ) : (
+              upcomingAppointments.map((appointment) => (
+                <AppointmentRow key={appointment.id} appointment={appointment} showDate />
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -75,21 +100,24 @@ export default function DashboardPage() {
             Vedi tutti
           </Link>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {mockClients.map((client) => (
-            <div
-              key={client.id}
-              className="rounded-lg border border-[var(--color-line)] px-3.5 py-3"
-            >
-              <p className="text-[15px] font-medium text-[var(--color-ink)]">
-                {client.firstName} {client.lastName}
-              </p>
-              <p className="mt-0.5 text-sm text-[var(--color-muted)]">
-                {client.phone}
-              </p>
-            </div>
-          ))}
-        </div>
+        {recentClients.length === 0 ? (
+          <p className="mt-3 text-[15px] text-[var(--color-muted)]">Nessun cliente ancora.</p>
+        ) : (
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {recentClients.slice(0, 4).map((client) => (
+              <Link
+                key={client.id}
+                href={`/clienti/${client.id}`}
+                className="rounded-lg border border-[var(--color-line)] px-3.5 py-3 hover:border-[var(--color-accent)]"
+              >
+                <p className="text-[15px] font-medium text-[var(--color-ink)]">
+                  {client.firstName} {client.lastName}
+                </p>
+                <p className="mt-0.5 text-sm text-[var(--color-muted)]">{client.phone}</p>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
