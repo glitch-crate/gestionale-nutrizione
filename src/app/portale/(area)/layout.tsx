@@ -26,6 +26,7 @@ export default async function PortaleAreaLayout({
     .maybeSingle();
 
   if (professional) {
+    await supabase.auth.signOut();
     redirect("/portale/login?errore=account_professionista");
   }
 

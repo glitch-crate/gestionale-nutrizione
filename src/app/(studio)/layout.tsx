@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,23 @@ export default async function StudioLayout({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    userEmail = user?.email ?? null;
+
+    if (user) {
+      // Un cliente che per errore ha fatto login da qui (invece che dal
+      // portale) non deve mai vedere quest'area: lo rimandiamo indietro.
+      const { data: professional } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+
+      if (!professional) {
+        await supabase.auth.signOut();
+        redirect("/login?errore=account_cliente");
+      }
+
+      userEmail = user.email ?? null;
+    }
   }
 
   return (
