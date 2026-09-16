@@ -13,6 +13,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -21,13 +22,17 @@ export function RegisterForm() {
 
     const supabase = createClient();
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { first_name: firstName, last_name: lastName, phone },
+      },
     });
 
+    setLoading(false);
+
     if (signUpError) {
-      setLoading(false);
       setError(
         signUpError.message.includes("already registered")
           ? "Esiste già un account con questa email."
@@ -36,25 +41,35 @@ export function RegisterForm() {
       return;
     }
 
-    // Collega subito il profilo cliente (anagrafica minima) all'utente
-    // appena creato, tramite la funzione dedicata sul database.
-    const { error: rpcError } = await supabase.rpc("register_client", {
-      p_first_name: firstName,
-      p_last_name: lastName,
-      p_phone: phone,
-    });
+    // Se la conferma email è richiesta, non c'è ancora una sessione
+    // attiva: il profilo cliente verrà creato automaticamente al primo
+    // accesso, dopo che avrà cliccato il link ricevuto via email.
+    if (!data.session) {
+      setCheckEmail(true);
+      return;
+    }
 
-    setLoading(false);
-
+    const { error: rpcError } = await supabase.rpc("ensure_client_profile");
     if (rpcError) {
-      setError(
-        "Account creato, ma non è stato possibile completare la registrazione. Contatta lo studio.",
-      );
+      setError("Account creato, ma non è stato possibile completare la registrazione. Contatta lo studio.");
       return;
     }
 
     router.replace("/portale/prenota");
     router.refresh();
+  }
+
+  if (checkEmail) {
+    return (
+      <div className="rounded-lg border border-[var(--color-status-confirmed)]/30 bg-[var(--color-status-confirmed-bg)] p-4">
+        <p className="text-[15px] font-medium text-[var(--color-status-confirmed)]">
+          Controlla la tua email
+        </p>
+        <p className="mt-1.5 text-[15px] text-[var(--color-ink)]">
+          Ti abbiamo inviato un link di conferma a {email}. Cliccalo, poi torna qui e accedi.
+        </p>
+      </div>
+    );
   }
 
   return (
