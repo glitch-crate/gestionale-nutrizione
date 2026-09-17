@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +12,7 @@ export function RegisterForm() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -18,6 +20,12 @@ export function RegisterForm() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    if (!privacyAccepted) {
+      setError("Devi accettare l'informativa privacy per registrarti.");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
@@ -26,7 +34,12 @@ export function RegisterForm() {
       email,
       password,
       options: {
-        data: { first_name: firstName, last_name: lastName, phone },
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          phone,
+          privacy_accepted: true,
+        },
       },
     });
 
@@ -147,6 +160,22 @@ export function RegisterForm() {
           placeholder="Almeno 8 caratteri"
         />
       </div>
+
+      <label className="flex items-start gap-2.5 text-sm text-[var(--color-ink)]">
+        <input
+          type="checkbox"
+          checked={privacyAccepted}
+          onChange={(e) => setPrivacyAccepted(e.target.checked)}
+          className="mt-0.5 accent-[var(--color-accent)]"
+        />
+        <span>
+          Ho letto e accetto l&apos;{" "}
+          <Link href="/privacy" target="_blank" className="font-medium underline">
+            informativa privacy
+          </Link>
+          .
+        </span>
+      </label>
 
       {error ? (
         <p role="alert" className="text-sm text-[var(--color-status-cancelled)]">
