@@ -41,11 +41,11 @@ export default async function PortaleAreaLayout({
 
   return (
     <div className="flex min-h-svh flex-col bg-[var(--color-canvas)]">
-      <header className="flex h-16 items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-surface)] px-6">
+      <header className="flex flex-col gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-6 sm:py-0">
         <p className="font-[family-name:var(--font-display)] text-lg italic text-[var(--color-ink)]">
           Studio Nutrizione
         </p>
-        <nav className="flex items-center gap-5">
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-5">
           <Link
             href="/portale/prenota"
             className="text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)]"
@@ -61,7 +61,7 @@ export default async function PortaleAreaLayout({
           <LogoutButton redirectTo="/portale/login" />
         </nav>
       </header>
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

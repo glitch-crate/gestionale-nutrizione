@@ -5,34 +5,26 @@ export default function PrivacyPage() {
         Informativa privacy
       </h1>
 
-      <div className="rounded-lg border border-[var(--color-status-pending)]/30 bg-[var(--color-status-pending-bg)] p-4">
-        <p className="text-[15px] text-[var(--color-ink)]">
-          <strong>Da completare prima della pubblicazione reale.</strong> Alcuni dati (ragione
-          sociale, P.IVA, indirizzo, email di contatto, periodo di conservazione) vanno ancora
-          inseriti — cercali contrassegnati tra parentesi quadre qui sotto.
-        </p>
-      </div>
-
-      <p className="text-sm text-[var(--color-muted)]">Ultimo aggiornamento: [inserire data]</p>
+      <p className="text-sm text-[var(--color-muted)]">Ultimo aggiornamento: 18 settembre 2026</p>
 
       <div className="flex flex-col gap-4 text-[15px] text-[var(--color-ink)]">
         <p>
           Ai sensi degli articoli 13 e 14 del Regolamento (UE) 2016/679 (&quot;GDPR&quot;), questa
-          informativa descrive come [Nome Studio / Titolare] tratta i dati personali dei clienti
+          informativa descrive come Dott.ssa Francesca Perego tratta i dati personali dei clienti
           che utilizzano il portale di prenotazione online.
         </p>
 
         <h2 className="mt-2 font-medium">1. Titolare del trattamento</h2>
         <p>
-          <strong>[Nome Studio / Nome e Cognome del professionista]</strong>
+          <strong>Francesca Perego</strong> — libero professionista individuale
           <br />
-          Sede: [indirizzo]
+          Sede: Via G. Matteotti, 66 — 20842 Besana in Brianza (MB)
           <br />
-          P.IVA / C.F.: [...]
+          P.IVA / C.F.: 08834180963
           <br />
-          Email di contatto: [email]
+          Email di contatto: fpperego@gmail.com
           <br />
-          Telefono: [telefono]
+          Telefono: 349 660 8215
         </p>
 
         <h2 className="mt-2 font-medium">2. Quali dati raccogliamo</h2>
@@ -58,7 +50,7 @@ export default function PrivacyPage() {
         <p>
           I dati sono conservati su server sicuri all&apos;interno dell&apos;infrastruttura del
           nostro fornitore tecnico (Supabase Inc., con server nell&apos;Unione Europea). Li
-          conserviamo per [inserire periodo], salvo obblighi di legge diversi.
+          conserviamo per 5 anni dall&apos;ultimo appuntamento, salvo obblighi di legge diversi.
         </p>
 
         <h2 className="mt-2 font-medium">5. Con chi condividiamo i tuoi dati</h2>
@@ -71,9 +63,10 @@ export default function PrivacyPage() {
         <h2 className="mt-2 font-medium">6. I tuoi diritti</h2>
         <p>
           In qualsiasi momento puoi richiedere accesso, rettifica, cancellazione, limitazione o
-          portabilità dei tuoi dati, scrivendo a <strong>[email di contatto]</strong>. Hai inoltre
-          diritto a proporre reclamo al Garante per la protezione dei dati personali
-          (www.garanteprivacy.it).
+          portabilità dei tuoi dati, scrivendo a{" "}
+          <strong>fpperego@gmail.com</strong> o telefonando al{" "}
+          <strong>349 660 8215</strong>. Hai inoltre diritto a proporre reclamo al Garante per la
+          protezione dei dati personali (www.garanteprivacy.it).
         </p>
 
         <h2 className="mt-2 font-medium">7. Modifiche a questa informativa</h2>

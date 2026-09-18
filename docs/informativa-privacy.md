@@ -1,16 +1,16 @@
 # Informativa privacy
 
-*Ultimo aggiornamento: [inserire data]*
+*Ultimo aggiornamento: 18 settembre 2026*
 
-Ai sensi degli articoli 13 e 14 del Regolamento (UE) 2016/679 ("GDPR"), questa informativa descrive come [Nome Studio / Titolare — es. "Dott.ssa [Nome Cognome]", P.IVA/C.F. [...]] tratta i dati personali dei clienti che utilizzano il portale di prenotazione online.
+Ai sensi degli articoli 13 e 14 del Regolamento (UE) 2016/679 ("GDPR"), questa informativa descrive come Dott.ssa Francesca Perego tratta i dati personali dei clienti che utilizzano il portale di prenotazione online.
 
 ## 1. Titolare del trattamento
 
-**[Nome Studio / Nome e Cognome del professionista]**
-Sede: [indirizzo]
-P.IVA / C.F.: [...]
-Email di contatto: [email]
-Telefono: [telefono]
+**Francesca Perego** — libero professionista individuale
+Sede: Via G. Matteotti, 66 — 20842 Besana in Brianza (MB)
+P.IVA / C.F.: 08834180963
+Email di contatto: fpperego@gmail.com
+Telefono: 349 660 8215
 
 ## 2. Quali dati raccogliamo
 
@@ -33,18 +33,18 @@ Non utilizziamo i tuoi dati per finalità di marketing, non li comunichiamo a te
 
 I dati sono conservati su server sicuri all'interno dell'infrastruttura del nostro fornitore tecnico (Supabase Inc., con server nell'Unione Europea), protetti da meccanismi di sicurezza che impediscono a chiunque non sia autorizzato — incluso ad altri clienti — di accedervi.
 
-Conserviamo i tuoi dati per [inserire periodo — es. "tutta la durata del rapporto professionale e per i successivi 2 anni dall'ultimo appuntamento"], salvo obblighi di legge che richiedano una conservazione più lunga.
+Conserviamo i tuoi dati per **5 anni dall'ultimo appuntamento**, salvo obblighi di legge che richiedano una conservazione più lunga (la titolare ha confermato di non avere, al momento, obblighi fiscali/contabili che richiedano una conservazione più lunga).
 
 ## 5. Con chi condividiamo i tuoi dati
 
-I tuoi dati sono trattati esclusivamente da [Nome Studio] e non vengono venduti, ceduti o comunicati a terzi per finalità commerciali. Per il funzionamento tecnico del portale ci avvaliamo di:
+I tuoi dati sono trattati esclusivamente da Francesca Perego e non vengono venduti, ceduti o comunicati a terzi per finalità commerciali. Per il funzionamento tecnico del portale ci avvaliamo di:
 
 - **Supabase Inc.**, fornitore dell'infrastruttura di database e autenticazione (responsabile del trattamento)
 - **Vercel Inc.**, fornitore dell'hosting del sito web (responsabile del trattamento)
 
 ## 6. I tuoi diritti
 
-In qualsiasi momento puoi richiedere a [Nome Studio]:
+In qualsiasi momento puoi richiedere a Francesca Perego:
 
 - **Accesso** ai tuoi dati personali che trattiamo
 - **Rettifica** di dati inesatti o incompleti
@@ -52,10 +52,16 @@ In qualsiasi momento puoi richiedere a [Nome Studio]:
 - **Limitazione** del trattamento in specifici casi previsti dalla legge
 - **Portabilità** dei tuoi dati in un formato strutturato
 
-Per esercitare questi diritti, scrivi a: **[email di contatto]**
+Per esercitare questi diritti, scrivi a: **fpperego@gmail.com** o telefona al **349 660 8215**.
 
 Hai inoltre il diritto di proporre reclamo al Garante per la protezione dei dati personali (www.garanteprivacy.it) se ritieni che il trattamento violi la normativa vigente.
 
 ## 7. Modifiche a questa informativa
 
 Questa informativa può essere aggiornata nel tempo. La versione più recente è sempre disponibile su questa pagina.
+
+---
+
+*Nota per lo sviluppo: questo testo è stato redatto sulla base dei dati forniti dalla titolare
+tramite questionario. Non sostituisce una consulenza legale — se ne consiglia comunque la
+revisione da parte di un consulente privacy prima dell'uso su larga scala.*

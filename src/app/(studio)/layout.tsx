@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
+import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function StudioLayout({
@@ -36,15 +35,5 @@ export default async function StudioLayout({
     }
   }
 
-  return (
-    <div className="flex h-svh">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header userEmail={userEmail} />
-        <main className="flex-1 overflow-y-auto bg-[var(--color-canvas)] p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <AppShell userEmail={userEmail}>{children}</AppShell>;
 }
