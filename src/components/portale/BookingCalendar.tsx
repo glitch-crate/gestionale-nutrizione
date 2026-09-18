@@ -158,7 +158,7 @@ export function BookingCalendar() {
                 key={slot.slotStart}
                 onClick={() => handleBook(slot)}
                 disabled={booking === slot.slotStart}
-                className="rounded-lg border border-[var(--color-line)] px-3.5 py-2 text-sm font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:opacity-50"
+                className="min-h-[44px] rounded-lg border border-[var(--color-line)] px-3.5 py-2.5 text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:opacity-50"
               >
                 {booking === slot.slotStart ? "Prenoto…" : formatTime(slot.slotStart)}
               </button>

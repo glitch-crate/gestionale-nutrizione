@@ -40,9 +40,9 @@ export default async function IMieiAppuntamentiPage() {
           {appointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="flex items-center justify-between gap-4 border-b border-[var(--color-line)] py-3.5 last:border-none"
+              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 border-b border-[var(--color-line)] py-3.5 last:border-none"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="text-[15px] font-medium text-[var(--color-ink)]">
                   {formatDateTime(appointment.starts_at)}
                 </p>
