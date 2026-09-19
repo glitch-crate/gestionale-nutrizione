@@ -57,7 +57,7 @@ export function AppointmentActions({
   if (rescheduling) {
     return (
       <div className="flex flex-col items-end gap-1.5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <input
             type="datetime-local"
             value={newTime}
@@ -85,7 +85,7 @@ export function AppointmentActions({
 
   return (
     <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {status !== "completato" && status !== "annullato" ? (
           <>
             {status === "da_confermare" ? (

@@ -24,7 +24,7 @@ export default async function AppuntamentiPage() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
             Appuntamenti
@@ -35,7 +35,7 @@ export default async function AppuntamentiPage() {
         </div>
         <Link
           href="/appuntamenti/nuovo"
-          className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
+          className="w-fit rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
         >
           + Nuovo appuntamento
         </Link>
@@ -48,7 +48,7 @@ export default async function AppuntamentiPage() {
           {appointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="flex items-center justify-between gap-4 border-b border-[var(--color-line)] px-5 py-4 last:border-none"
+              className="flex flex-col gap-3 border-b border-[var(--color-line)] px-4 py-4 last:border-none sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
             >
               <div>
                 <p className="text-[15px] font-medium text-[var(--color-ink)]">
@@ -58,7 +58,7 @@ export default async function AppuntamentiPage() {
                   {formatDateTime(appointment.startsAt)} · {appointment.appointmentTypeName}
                 </p>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <StatusBadge status={appointment.status} />
                 <AppointmentActions
                   appointmentId={appointment.id}

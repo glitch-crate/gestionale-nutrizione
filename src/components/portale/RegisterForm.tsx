@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { PrivacyModal } from "@/components/portale/PrivacyModal";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -13,6 +13,7 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -170,12 +171,20 @@ export function RegisterForm() {
         />
         <span>
           Ho letto e accetto l&apos;{" "}
-          <Link href="/privacy" target="_blank" className="font-medium underline">
+          <button
+            type="button"
+            onClick={() => setShowPrivacyModal(true)}
+            className="font-medium underline"
+          >
             informativa privacy
-          </Link>
+          </button>
           .
         </span>
       </label>
+
+      {showPrivacyModal ? (
+        <PrivacyModal onClose={() => setShowPrivacyModal(false)} />
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-[var(--color-status-cancelled)]">

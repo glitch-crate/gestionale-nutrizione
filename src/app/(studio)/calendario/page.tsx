@@ -40,13 +40,13 @@ export default async function CalendarioPage({
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
           Calendario
         </h1>
         <Link
           href="/appuntamenti/nuovo"
-          className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
+          className="w-fit rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
         >
           + Nuovo appuntamento
         </Link>
