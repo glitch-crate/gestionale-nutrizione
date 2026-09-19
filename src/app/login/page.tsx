@@ -32,6 +32,16 @@ export default async function LoginPage({
         ) : null}
 
         <LoginForm />
+
+        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+          Sei un cliente e vuoi prenotare un appuntamento?{" "}
+          <Link
+            href="/portale/registrati"
+            className="font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]"
+          >
+            Vai al portale prenotazioni
+          </Link>
+        </p>
       </div>
     </main>
   );
