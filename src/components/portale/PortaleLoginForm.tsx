@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -51,9 +52,17 @@ export function PortaleLoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-[var(--color-ink)]">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className="text-sm font-medium text-[var(--color-ink)]">
+            Password
+          </label>
+          <Link
+            href="/portale/password-dimenticata"
+            className="text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]"
+          >
+            Password dimenticata?
+          </Link>
+        </div>
         <input
           id="password"
           type="password"
