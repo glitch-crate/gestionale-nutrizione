@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { getAppointmentsInRange } from "@/lib/queries";
+import { getAppointmentsInRange, getTimeBlocksInRange } from "@/lib/queries";
 import { CalendarNav } from "@/components/calendario/CalendarNav";
 import { DayView } from "@/components/calendario/DayView";
 import { WeekView } from "@/components/calendario/WeekView";
+import { BlockTimeForm } from "@/components/calendario/BlockTimeForm";
+import { TimeBlockRow } from "@/components/calendario/TimeBlockRow";
 
 function startOfWeek(date: Date) {
   const d = new Date(date);
@@ -36,7 +38,10 @@ export default async function CalendarioPage({
     to.setHours(23, 59, 59, 999);
   }
 
-  const appointments = await getAppointmentsInRange(from, to);
+  const [appointments, timeBlocks] = await Promise.all([
+    getAppointmentsInRange(from, to),
+    getTimeBlocksInRange(from, to),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -44,15 +49,26 @@ export default async function CalendarioPage({
         <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
           Calendario
         </h1>
-        <Link
-          href="/appuntamenti/nuovo"
-          className="w-fit rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
-        >
-          + Nuovo appuntamento
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <BlockTimeForm defaultDate={currentDate} />
+          <Link
+            href="/appuntamenti/nuovo"
+            className="w-fit rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
+          >
+            + Nuovo appuntamento
+          </Link>
+        </div>
       </div>
 
       <CalendarNav view={view} currentDate={currentDate} />
+
+      {timeBlocks.length > 0 ? (
+        <div className="overflow-hidden rounded-xl border border-[var(--color-line)]">
+          {timeBlocks.map((block) => (
+            <TimeBlockRow key={block.id} block={block} />
+          ))}
+        </div>
+      ) : null}
 
       {view === "giorno" ? (
         <DayView appointments={appointments} />

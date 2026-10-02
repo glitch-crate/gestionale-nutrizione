@@ -2,7 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAvailableSlotsForDate } from "@/lib/queries";
 import type { AppointmentStatus } from "@/types";
+
+export async function getAvailableSlotsAction(
+  dateStr: string,
+  durationMinutes: number,
+): Promise<string[]> {
+  return getAvailableSlotsForDate(dateStr, durationMinutes);
+}
 
 export type ActionResult = { success: true } | { success: false; error: string };
 

@@ -193,14 +193,24 @@ export async function getFreeSlotsCountToday(): Promise<number> {
 
   if (windows.length === 0) return 0;
 
-  const { data: todaysAppointments } = await supabase
-    .from("appointments")
-    .select("starts_at, ends_at")
-    .gte("starts_at", new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString())
-    .lte("starts_at", new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString())
-    .neq("status", "annullato");
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
 
-  const busy = (todaysAppointments ?? []).map((a) => ({
+  const [{ data: todaysAppointments }, { data: todaysBlocks }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("starts_at, ends_at")
+      .gte("starts_at", todayStart)
+      .lte("starts_at", todayEnd)
+      .neq("status", "annullato"),
+    supabase
+      .from("time_blocks")
+      .select("starts_at, ends_at")
+      .gte("starts_at", todayStart)
+      .lte("starts_at", todayEnd),
+  ]);
+
+  const busy = [...(todaysAppointments ?? []), ...(todaysBlocks ?? [])].map((a) => ({
     start: new Date(a.starts_at).getTime(),
     end: new Date(a.ends_at).getTime(),
   }));
@@ -226,4 +236,117 @@ export async function getFreeSlotsCountToday(): Promise<number> {
   }
 
   return freeCount;
+}
+
+export type TimeBlock = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  reason: string | null;
+};
+
+export async function getTimeBlocksInRange(from: Date, to: Date): Promise<TimeBlock[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("time_blocks")
+    .select("id, starts_at, ends_at, reason")
+    .gte("starts_at", from.toISOString())
+    .lte("starts_at", to.toISOString())
+    .order("starts_at", { ascending: true });
+
+  return (data ?? []).map((b) => ({
+    id: b.id,
+    startsAt: b.starts_at,
+    endsAt: b.ends_at,
+    reason: b.reason,
+  }));
+}
+
+// Calcola gli orari liberi per il professionista in una data specifica,
+// data la durata del tipo di appuntamento scelto. Usata dal form "Nuovo
+// appuntamento" per mostrare pulsanti invece di una casella di testo
+// libera, così non capita più di dover "indovinare" un orario che
+// combaci esattamente con quello prima/dopo.
+export async function getAvailableSlotsForDate(
+  dateStr: string, // "YYYY-MM-DD"
+  durationMinutes: number,
+): Promise<string[]> {
+  const supabase = await createClient();
+
+  const { data: settings } = await supabase
+    .from("studio_settings")
+    .select("opening_hours")
+    .maybeSingle();
+
+  if (!settings) return [];
+
+  const openingHours = (settings.opening_hours as Record<string, { start: string; end: string }[]>) ?? {};
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const isoDow = String(dateObj.getUTCDay() === 0 ? 7 : dateObj.getUTCDay());
+  const windows = openingHours[isoDow] ?? [];
+
+  if (windows.length === 0) return [];
+
+  // Il server gira in UTC: per convertire correttamente gli orari di
+  // apertura (pensati nel fuso di Roma) calcoliamo lo scarto esatto per
+  // quel giorno specifico, che gestisce da solo l'ora legale.
+  const noonUtc = new Date(`${dateStr}T12:00:00.000Z`);
+  const romeHourAtNoonUtc = parseInt(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Rome",
+      hour: "2-digit",
+      hour12: false,
+    }).format(noonUtc),
+    10,
+  );
+  const offsetHours = romeHourAtNoonUtc - 12; // +1 (CET) oppure +2 (CEST)
+
+  const dayStart = `${dateStr}T00:00:00`;
+  const dayEnd = `${dateStr}T23:59:59`;
+
+  const [{ data: dayAppointments }, { data: dayBlocks }] = await Promise.all([
+    supabase
+      .from("appointments")
+      .select("starts_at, ends_at")
+      .gte("starts_at", dayStart)
+      .lte("starts_at", dayEnd)
+      .neq("status", "annullato"),
+    supabase
+      .from("time_blocks")
+      .select("starts_at, ends_at")
+      .gte("starts_at", dayStart)
+      .lte("starts_at", dayEnd),
+  ]);
+
+  const busy = [...(dayAppointments ?? []), ...(dayBlocks ?? [])].map((b) => ({
+    start: new Date(b.starts_at).getTime(),
+    end: new Date(b.ends_at).getTime(),
+  }));
+
+  const now = Date.now();
+  const slots: string[] = [];
+  const step = durationMinutes * 60 * 1000;
+
+  for (const window of windows) {
+    const [startH, startM] = window.start.split(":").map(Number);
+    const [endH, endM] = window.end.split(":").map(Number);
+    const windowStartUtc = new Date(`${dateStr}T${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00.000Z`);
+    windowStartUtc.setUTCHours(windowStartUtc.getUTCHours() - offsetHours);
+    const windowEndUtc = new Date(`${dateStr}T${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00.000Z`);
+    windowEndUtc.setUTCHours(windowEndUtc.getUTCHours() - offsetHours);
+
+    let cursor = windowStartUtc.getTime();
+    const windowEnd = windowEndUtc.getTime();
+
+    while (cursor + step <= windowEnd) {
+      const slotEnd = cursor + step;
+      const overlaps = busy.some((b) => b.start < slotEnd && b.end > cursor);
+      if (cursor > now && !overlaps) slots.push(new Date(cursor).toISOString());
+      cursor = slotEnd;
+    }
+  }
+
+  return slots;
 }
