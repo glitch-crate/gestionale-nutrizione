@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   "/portale/password-dimenticata",
   "/portale/reimposta-password",
   "/privacy",
+  "/api/cron", // si protegge da sola con CRON_SECRET, non con il login
 ];
 
 export async function updateSession(request: NextRequest) {
