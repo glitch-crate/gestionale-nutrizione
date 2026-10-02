@@ -40,13 +40,13 @@ export function BlockTimeForm({ defaultDate }: { defaultDate: string }) {
 
   return (
     <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-start justify-between gap-3">
         <h2 className="text-[15px] font-medium text-[var(--color-ink)]">
           Blocca un orario (es. impegno personale)
         </h2>
         <button
           onClick={() => setOpen(false)}
-          className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+          className="shrink-0 text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
         >
           Annulla
         </button>
