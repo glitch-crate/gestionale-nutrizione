@@ -22,7 +22,11 @@ export function ForgotPasswordForm() {
     setLoading(false);
 
     if (resetError) {
-      setError("Non è stato possibile inviare l'email. Riprova.");
+      setError(
+        resetError.message.toLowerCase().includes("seconds")
+          ? "Hai già richiesto un link da poco: controlla la posta (potrebbe essere già arrivato), oppure aspetta circa un minuto prima di riprovare."
+          : "Non è stato possibile inviare l'email. Riprova.",
+      );
       return;
     }
 
