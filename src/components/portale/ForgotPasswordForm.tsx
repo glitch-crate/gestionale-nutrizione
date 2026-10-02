@@ -8,9 +8,11 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (cooldown > 0) return;
     setError(null);
     setLoading(true);
 
@@ -20,10 +22,25 @@ export function ForgotPasswordForm() {
     });
 
     setLoading(false);
+    setCooldown(20);
+    const interval = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
 
     if (resetError) {
+      const isRateLimited =
+        resetError.status === 429 ||
+        resetError.code === "over_email_send_rate_limit" ||
+        resetError.message.toLowerCase().includes("second");
+
       setError(
-        resetError.message.toLowerCase().includes("seconds")
+        isRateLimited
           ? "Hai già richiesto un link da poco: controlla la posta (potrebbe essere già arrivato), oppure aspetta circa un minuto prima di riprovare."
           : "Non è stato possibile inviare l'email. Riprova.",
       );
@@ -72,10 +89,14 @@ export function ForgotPasswordForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || cooldown > 0}
         className="mt-2 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
       >
-        {loading ? "Invio in corso…" : "Invia link di reset"}
+        {loading
+          ? "Invio in corso…"
+          : cooldown > 0
+            ? `Riprova tra ${cooldown}s`
+            : "Invia link di reset"}
       </button>
     </form>
   );
