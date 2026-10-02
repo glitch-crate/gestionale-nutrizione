@@ -34,19 +34,54 @@ export function ResetPasswordForm() {
     }
 
     const supabase = createClient();
+
+    // Supabase può passare la sessione in due modi diversi a seconda della
+    // configurazione: con un parametro ?code= da scambiare esplicitamente
+    // (PKCE), oppure con i token già nel frammento #, rilevati in automatico.
+    const code = searchParams.get("code");
+
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setLinkError(
+            "Questo link non è più valido: è scaduto oppure è già stato usato. Richiedine uno nuovo.",
+          );
+          return;
+        }
+        setReady(true);
+      });
+      return;
+    }
+
+    // Rete di sicurezza: se dopo qualche secondo non è successo nulla,
+    // mostriamo un messaggio invece di restare bloccati per sempre.
+    const timeout = setTimeout(() => {
+      setLinkError(
+        "Non siamo riusciti a verificare questo link. Prova a richiederne uno nuovo dalla pagina di login.",
+      );
+    }, 8000);
+
+    function markReady() {
+      clearTimeout(timeout);
+      setReady(true);
+    }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        setReady(true);
+        markReady();
       }
     });
 
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
+      if (data.session) markReady();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   async function handleSubmit(event: React.FormEvent) {
