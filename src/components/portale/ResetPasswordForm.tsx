@@ -12,11 +12,14 @@ export function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  // Il link dell'email può arrivare con un errore (scaduto, già usato,
-  // non valido) sia nella query string sia nel frammento #: lo
-  // controlliamo subito, invece di restare bloccati su "verifica in
-  // corso" all'infinito.
+  // Controlliamo subito se il link porta un errore noto, ma NON
+  // "consumiamo" il codice di recupero finché l'utente non clicca
+  // davvero un pulsante: così un'apertura automatica del link (es. per
+  // generare un'anteprima, fatta da alcune app di posta) non lo brucia
+  // prima che la persona vera possa usarlo.
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const searchParams = new URLSearchParams(window.location.search);
@@ -33,28 +36,16 @@ export function ResetPasswordForm() {
       return;
     }
 
-    const supabase = createClient();
-
-    // Supabase può passare la sessione in due modi diversi a seconda della
-    // configurazione: con un parametro ?code= da scambiare esplicitamente
-    // (PKCE), oppure con i token già nel frammento #, rilevati in automatico.
     const code = searchParams.get("code");
-
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          setLinkError(
-            "Questo link non è più valido: è scaduto oppure è già stato usato. Richiedine uno nuovo.",
-          );
-          return;
-        }
-        setReady(true);
-      });
+      setPendingCode(code);
       return;
     }
 
-    // Rete di sicurezza: se dopo qualche secondo non è successo nulla,
-    // mostriamo un messaggio invece di restare bloccati per sempre.
+    // Flusso alternativo (token già nel frammento #): qui Supabase lo
+    // rileva da solo, non c'è un "codice" da scambiare esplicitamente.
+    const supabase = createClient();
+
     const timeout = setTimeout(() => {
       setLinkError(
         "Non siamo riusciti a verificare questo link. Prova a richiederne uno nuovo dalla pagina di login.",
@@ -83,6 +74,26 @@ export function ResetPasswordForm() {
       clearTimeout(timeout);
     };
   }, []);
+
+  async function handleConfirmLink() {
+    if (!pendingCode) return;
+    setConfirming(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(pendingCode);
+
+    setConfirming(false);
+
+    if (exchangeError) {
+      setLinkError(
+        "Questo link non è più valido: è scaduto oppure è già stato usato. Richiedine uno nuovo.",
+      );
+      return;
+    }
+
+    setReady(true);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -115,6 +126,23 @@ export function ResetPasswordForm() {
         >
           Richiedi un nuovo link
         </Link>
+      </div>
+    );
+  }
+
+  if (pendingCode && !ready) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-[15px] text-[var(--color-ink)]">
+          Clicca qui sotto per confermare che sei tu e continuare.
+        </p>
+        <button
+          onClick={handleConfirmLink}
+          disabled={confirming}
+          className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
+        >
+          {confirming ? "Verifica in corso…" : "Continua"}
+        </button>
       </div>
     );
   }
