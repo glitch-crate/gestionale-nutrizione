@@ -8,6 +8,7 @@ export default async function StudioLayout({
   children: React.ReactNode;
 }) {
   let userEmail: string | null = null;
+  let professionalName: string | null = null;
 
   // Se Supabase non è ancora configurato, mostriamo comunque la UI con
   // dati mock (utile durante lo sviluppo prima dello STEP 5/6).
@@ -22,7 +23,7 @@ export default async function StudioLayout({
       // portale) non deve mai vedere quest'area: lo rimandiamo indietro.
       const { data: professional } = await supabase
         .from("professionals")
-        .select("id")
+        .select("id, full_name")
         .eq("auth_user_id", user.id)
         .maybeSingle();
 
@@ -32,8 +33,13 @@ export default async function StudioLayout({
       }
 
       userEmail = user.email ?? null;
+      professionalName = professional.full_name ?? null;
     }
   }
 
-  return <AppShell userEmail={userEmail}>{children}</AppShell>;
+  return (
+    <AppShell userEmail={userEmail} professionalName={professionalName}>
+      {children}
+    </AppShell>
+  );
 }

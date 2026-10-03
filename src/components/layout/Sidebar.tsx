@@ -14,9 +14,11 @@ const NAV_ITEMS = [
 export function Sidebar({
   open = false,
   onNavigate,
+  professionalName,
 }: {
   open?: boolean;
   onNavigate?: () => void;
+  professionalName?: string | null;
 }) {
   const pathname = usePathname();
 
@@ -66,8 +68,8 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="mt-auto rounded-lg border border-[var(--color-pine-light)] px-3 py-3 text-sm text-[var(--color-pine-text-muted)]">
-          Dati fittizi — ambiente di sviluppo
+        <div className="mt-auto rounded-lg border border-[var(--color-pine-light)] px-3 py-3 text-sm text-[var(--color-pine-text)]">
+          {professionalName ?? "Studio Nutrizione"}
         </div>
       </aside>
     </>
