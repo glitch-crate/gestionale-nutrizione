@@ -95,7 +95,7 @@ export async function getClients(search?: string): Promise<Client[]> {
   const supabase = await createClient();
   let query = supabase
     .from("clients")
-    .select("id, studio_id, first_name, last_name, phone, email, notes, created_at")
+    .select("id, studio_id, first_name, last_name, phone, email, notes, created_at, is_existing_client")
     .order("last_name", { ascending: true });
 
   if (search && search.trim()) {
@@ -116,6 +116,7 @@ export async function getClients(search?: string): Promise<Client[]> {
     email: c.email,
     notes: c.notes,
     createdAt: c.created_at,
+    isExistingClient: c.is_existing_client,
   }));
 }
 
@@ -123,7 +124,7 @@ export async function getClientById(id: string): Promise<Client | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("clients")
-    .select("id, studio_id, first_name, last_name, phone, email, notes, created_at")
+    .select("id, studio_id, first_name, last_name, phone, email, notes, created_at, is_existing_client")
     .eq("id", id)
     .maybeSingle();
 
@@ -138,6 +139,7 @@ export async function getClientById(id: string): Promise<Client | null> {
     email: data.email,
     notes: data.notes,
     createdAt: data.created_at,
+    isExistingClient: data.is_existing_client,
   };
 }
 

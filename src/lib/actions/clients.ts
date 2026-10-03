@@ -47,6 +47,26 @@ export async function createClientAction(formData: FormData): Promise<ActionResu
   return { success: true };
 }
 
+export async function setExistingClientFlagAction(
+  clientId: string,
+  value: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ is_existing_client: value })
+    .eq("id", clientId);
+
+  if (error) {
+    return { success: false, error: "Errore durante il salvataggio." };
+  }
+
+  revalidatePath(`/clienti/${clientId}`);
+  revalidatePath("/clienti");
+  return { success: true };
+}
+
 export async function updateClientAction(clientId: string, formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
 

@@ -27,6 +27,7 @@ export interface Client {
   email: string;
   notes: string | null;
   createdAt: string;
+  isExistingClient: boolean;
 }
 
 export interface Appointment {

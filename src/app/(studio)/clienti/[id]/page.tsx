@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getClientAppointments, getClientById } from "@/lib/queries";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ExistingClientToggle } from "@/components/clienti/ExistingClientToggle";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("it-IT", {
@@ -62,6 +63,8 @@ export default async function ClienteDettaglioPage({
           ) : null}
         </dl>
       </div>
+
+      <ExistingClientToggle clientId={client.id} initialValue={client.isExistingClient} />
 
       <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-medium text-[var(--color-ink)]">Storico appuntamenti</h2>

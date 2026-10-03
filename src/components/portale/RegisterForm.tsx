@@ -13,6 +13,7 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [isExistingClient, setIsExistingClient] = useState<boolean | null>(null);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,11 @@ export function RegisterForm() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+
+    if (isExistingClient === null) {
+      setError("Indica se sei già cliente dello studio.");
+      return;
+    }
 
     if (!privacyAccepted) {
       setError("Devi accettare l'informativa privacy per registrarti.");
@@ -40,6 +46,7 @@ export function RegisterForm() {
           last_name: lastName,
           phone,
           privacy_accepted: true,
+          is_existing_client: isExistingClient,
         },
       },
     });
@@ -160,6 +167,36 @@ export function RegisterForm() {
           className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
           placeholder="Almeno 8 caratteri"
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-medium text-[var(--color-ink)]">
+          Sei già cliente dello studio?
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setIsExistingClient(true)}
+            className={`min-h-[44px] rounded-lg border px-3.5 py-2.5 text-[15px] font-medium transition-colors ${
+              isExistingClient === true
+                ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                : "border-[var(--color-line)] text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+            }`}
+          >
+            Sì, sono già cliente
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsExistingClient(false)}
+            className={`min-h-[44px] rounded-lg border px-3.5 py-2.5 text-[15px] font-medium transition-colors ${
+              isExistingClient === false
+                ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                : "border-[var(--color-line)] text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+            }`}
+          >
+            No, sono nuovo
+          </button>
+        </div>
       </div>
 
       <label className="flex items-start gap-2.5 text-sm text-[var(--color-ink)]">
