@@ -7,12 +7,31 @@ export type ActionResult = { success: true } | { success: false; error: string }
 
 const DAYS = ["1", "2", "3", "4", "5", "6", "7"];
 
+const DAY_LABELS: Record<string, string> = {
+  "1": "lunedì",
+  "2": "martedì",
+  "3": "mercoledì",
+  "4": "giovedì",
+  "5": "venerdì",
+  "6": "sabato",
+  "7": "domenica",
+};
+
 export async function updateOpeningHoursAction(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
 
   const businessName = String(formData.get("businessName") ?? "").trim();
   if (!businessName) {
     return { success: false, error: "Il nome dello studio è obbligatorio." };
+  }
+
+  const { data: professional } = await supabase
+    .from("professionals")
+    .select("studio_id")
+    .maybeSingle();
+
+  if (!professional) {
+    return { success: false, error: "Nessuno studio collegato a questo account." };
   }
 
   const openingHours: Record<string, { start: string; end: string }[]> = {};
@@ -32,7 +51,7 @@ export async function updateOpeningHoursAction(formData: FormData): Promise<Acti
         if (start >= end) {
           return {
             success: false,
-            error: `Orario non valido per uno dei giorni: l'inizio deve essere prima della fine.`,
+            error: `Orario non valido per ${DAY_LABELS[day]}: l'orario di inizio (${start}) deve essere prima di quello di fine (${end}).`,
           };
         }
         windows.push({ start, end });
@@ -43,10 +62,14 @@ export async function updateOpeningHoursAction(formData: FormData): Promise<Acti
 
   const { error } = await supabase
     .from("studio_settings")
-    .update({ business_name: businessName, opening_hours: openingHours });
+    .update({ business_name: businessName, opening_hours: openingHours })
+    .eq("studio_id", professional.studio_id);
 
   if (error) {
-    return { success: false, error: "Errore durante il salvataggio degli orari." };
+    return {
+      success: false,
+      error: `Errore durante il salvataggio degli orari: ${error.message}`,
+    };
   }
 
   revalidatePath("/impostazioni");

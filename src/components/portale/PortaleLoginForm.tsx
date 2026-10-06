@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export function PortaleLoginForm() {
   const router = useRouter();
@@ -63,14 +64,12 @@ export function PortaleLoginForm() {
             Password dimenticata?
           </Link>
         </div>
-        <input
+        <PasswordField
           id="password"
-          type="password"
           required
           autoComplete="current-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
+          onChange={setPassword}
         />
       </div>
 

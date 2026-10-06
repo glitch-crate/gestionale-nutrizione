@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getAvailableSlotsForDate } from "@/lib/queries";
+import { parseRomeLocalDateTime } from "@/lib/timezone";
 import type { AppointmentStatus } from "@/types";
 
 export async function getAvailableSlotsAction(
@@ -112,7 +113,7 @@ export async function rescheduleAppointmentAction(
 
   const durationMs =
     new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime();
-  const newStart = new Date(newStartsAt);
+  const newStart = parseRomeLocalDateTime(newStartsAt);
   const newEnd = new Date(newStart.getTime() + durationMs);
 
   const { error } = await supabase

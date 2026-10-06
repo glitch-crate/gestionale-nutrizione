@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export function ForgotPasswordForm() {
   const router = useRouter();
@@ -123,16 +124,14 @@ export function ForgotPasswordForm() {
           <label htmlFor="newPassword" className="text-sm font-medium text-[var(--color-ink)]">
             Nuova password
           </label>
-          <input
+          <PasswordField
             id="newPassword"
-            type="password"
             required
             minLength={8}
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             placeholder="Almeno 8 caratteri"
-            className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20"
           />
         </div>
 
