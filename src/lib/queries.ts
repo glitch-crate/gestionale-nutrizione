@@ -352,3 +352,28 @@ export async function getAvailableSlotsForDate(
 
   return slots;
 }
+
+export async function getMyClientProfile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("clients")
+    .select("id, first_name, last_name, phone, email")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    firstName: data.first_name,
+    lastName: data.last_name,
+    phone: data.phone,
+    email: data.email,
+  };
+}

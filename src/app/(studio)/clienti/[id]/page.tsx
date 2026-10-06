@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getClientAppointments, getClientById } from "@/lib/queries";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ExistingClientToggle } from "@/components/clienti/ExistingClientToggle";
+import { DeleteClientButton } from "@/components/clienti/DeleteClientButton";
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("it-IT", {
@@ -30,13 +31,16 @@ export default async function ClienteDettaglioPage({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
-        <Link href="/clienti" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]">
-          ← Tutti i clienti
-        </Link>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
-          {client.firstName} {client.lastName}
-        </h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Link href="/clienti" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]">
+            ← Tutti i clienti
+          </Link>
+          <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+            {client.firstName} {client.lastName}
+          </h1>
+        </div>
+        <DeleteClientButton clientId={client.id} clientName={`${client.firstName} ${client.lastName}`} />
       </div>
 
       <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">

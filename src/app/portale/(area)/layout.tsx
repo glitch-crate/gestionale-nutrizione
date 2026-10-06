@@ -58,6 +58,12 @@ export default async function PortaleAreaLayout({
           >
             I miei appuntamenti
           </Link>
+          <Link
+            href="/portale/profilo"
+            className="text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+          >
+            Il mio profilo
+          </Link>
           <LogoutButton redirectTo="/portale/login" />
         </nav>
       </header>
