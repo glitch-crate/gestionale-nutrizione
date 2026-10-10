@@ -1,4 +1,4 @@
-import { romeDateKey, romeDayStart, romeDayEnd, isoDow as isoDowOf } from "@/lib/timezone";
+import { romeDateKey, romeDayStart, romeDayEnd, isoDow as isoDowOf, computeFreeSlots } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
 
@@ -283,29 +283,12 @@ export async function getAvailableSlotsForDate(
 
   const openingHours = (settings.opening_hours as Record<string, { start: string; end: string }[]>) ?? {};
 
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const dateObj = new Date(Date.UTC(year, month - 1, day));
-  const isoDow = String(dateObj.getUTCDay() === 0 ? 7 : dateObj.getUTCDay());
-  const windows = openingHours[isoDow] ?? [];
-
+  const windows = openingHours[String(isoDowOf(dateStr))] ?? [];
   if (windows.length === 0) return [];
 
-  // Il server gira in UTC: per convertire correttamente gli orari di
-  // apertura (pensati nel fuso di Roma) calcoliamo lo scarto esatto per
-  // quel giorno specifico, che gestisce da solo l'ora legale.
-  const noonUtc = new Date(`${dateStr}T12:00:00.000Z`);
-  const romeHourAtNoonUtc = parseInt(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "Europe/Rome",
-      hour: "2-digit",
-      hour12: false,
-    }).format(noonUtc),
-    10,
-  );
-  const offsetHours = romeHourAtNoonUtc - 12; // +1 (CET) oppure +2 (CEST)
-
-  const dayStart = `${dateStr}T00:00:00`;
-  const dayEnd = `${dateStr}T23:59:59`;
+  // Il giorno è quello di Roma (00:00-24:00 locali), non quello UTC.
+  const dayStart = romeDayStart(dateStr).toISOString();
+  const dayEnd = romeDayEnd(dateStr).toISOString();
 
   const [{ data: dayAppointments }, { data: dayBlocks }] = await Promise.all([
     supabase
@@ -321,35 +304,13 @@ export async function getAvailableSlotsForDate(
       .lte("starts_at", dayEnd),
   ]);
 
-  const busy = [...(dayAppointments ?? []), ...(dayBlocks ?? [])].map((b) => ({
-    start: new Date(b.starts_at).getTime(),
-    end: new Date(b.ends_at).getTime(),
-  }));
-
-  const now = Date.now();
-  const slots: string[] = [];
-  const step = durationMinutes * 60 * 1000;
-
-  for (const window of windows) {
-    const [startH, startM] = window.start.split(":").map(Number);
-    const [endH, endM] = window.end.split(":").map(Number);
-    const windowStartUtc = new Date(`${dateStr}T${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00.000Z`);
-    windowStartUtc.setUTCHours(windowStartUtc.getUTCHours() - offsetHours);
-    const windowEndUtc = new Date(`${dateStr}T${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00.000Z`);
-    windowEndUtc.setUTCHours(windowEndUtc.getUTCHours() - offsetHours);
-
-    let cursor = windowStartUtc.getTime();
-    const windowEnd = windowEndUtc.getTime();
-
-    while (cursor + step <= windowEnd) {
-      const slotEnd = cursor + step;
-      const overlaps = busy.some((b) => b.start < slotEnd && b.end > cursor);
-      if (cursor > now && !overlaps) slots.push(new Date(cursor).toISOString());
-      cursor = slotEnd;
-    }
-  }
-
-  return slots;
+  return computeFreeSlots({
+    dateKey: dateStr,
+    windows,
+    durationMinutes,
+    busy: [...(dayAppointments ?? []), ...(dayBlocks ?? [])],
+    nowMs: Date.now(),
+  });
 }
 
 export async function getMyClientProfile() {
