@@ -6,7 +6,7 @@ import { ExistingClientToggle } from "@/components/clienti/ExistingClientToggle"
 import { DeleteClientButton } from "@/components/clienti/DeleteClientButton";
 
 function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("it-IT", {
+  return new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -56,7 +56,7 @@ export default async function ClienteDettaglioPage({
           <div>
             <dt className="text-sm text-[var(--color-muted)]">Cliente dal</dt>
             <dd className="text-[var(--color-ink)]">
-              {new Date(client.createdAt).toLocaleDateString("it-IT")}
+              {new Date(client.createdAt).toLocaleDateString("it-IT", { timeZone: "Europe/Rome" })}
             </dd>
           </div>
           {client.notes ? (

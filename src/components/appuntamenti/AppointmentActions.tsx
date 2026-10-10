@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toRomeInputValue } from "@/lib/timezone";
 import { useRouter } from "next/navigation";
 import {
   rescheduleAppointmentAction,
@@ -9,9 +10,7 @@ import {
 import type { AppointmentStatus } from "@/types";
 
 function toLocalInputValue(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toRomeInputValue(iso);
 }
 
 export function AppointmentActions({

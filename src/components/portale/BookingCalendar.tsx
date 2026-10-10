@@ -6,7 +6,7 @@ import type { AvailableSlot } from "@/types";
 
 function formatDayLabel(iso: string) {
   const date = new Date(iso);
-  const label = date.toLocaleDateString("it-IT", {
+  const label = date.toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -15,7 +15,7 @@ function formatDayLabel(iso: string) {
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("it-IT", {
+  return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome",
     hour: "2-digit",
     minute: "2-digit",
   });

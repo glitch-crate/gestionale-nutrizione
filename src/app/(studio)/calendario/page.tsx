@@ -1,3 +1,4 @@
+import { romeDateKey, addDaysToKey, isoDow, romeDayStart, romeDayEnd } from "@/lib/timezone";
 import Link from "next/link";
 import { getAppointmentsInRange, getTimeBlocksInRange } from "@/lib/queries";
 import { CalendarNav } from "@/components/calendario/CalendarNav";
@@ -6,14 +7,6 @@ import { WeekView } from "@/components/calendario/WeekView";
 import { BlockTimeForm } from "@/components/calendario/BlockTimeForm";
 import { TimeBlockRow } from "@/components/calendario/TimeBlockRow";
 
-function startOfWeek(date: Date) {
-  const d = new Date(date);
-  const day = (d.getDay() + 6) % 7; // 0 = lunedì
-  d.setDate(d.getDate() - day);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 export default async function CalendarioPage({
   searchParams,
 }: {
@@ -21,22 +14,11 @@ export default async function CalendarioPage({
 }) {
   const params = await searchParams;
   const view = params.view === "settimana" ? "settimana" : "giorno";
-  const currentDate = params.date ?? new Date().toISOString().slice(0, 10);
+  const currentDate = params.date ?? romeDateKey();
 
-  let from: Date;
-  let to: Date;
-
-  if (view === "giorno") {
-    from = new Date(currentDate);
-    from.setHours(0, 0, 0, 0);
-    to = new Date(currentDate);
-    to.setHours(23, 59, 59, 999);
-  } else {
-    from = startOfWeek(new Date(currentDate));
-    to = new Date(from);
-    to.setDate(to.getDate() + 7);
-    to.setHours(23, 59, 59, 999);
-  }
+  const weekStartKey = addDaysToKey(currentDate, -(isoDow(currentDate) - 1));
+  const from = romeDayStart(view === "giorno" ? currentDate : weekStartKey);
+  const to = romeDayEnd(view === "giorno" ? currentDate : addDaysToKey(weekStartKey, 6));
 
   const [appointments, timeBlocks] = await Promise.all([
     getAppointmentsInRange(from, to),
@@ -73,7 +55,7 @@ export default async function CalendarioPage({
       {view === "giorno" ? (
         <DayView appointments={appointments} />
       ) : (
-        <WeekView weekStart={from} appointments={appointments} />
+        <WeekView weekStartKey={weekStartKey} appointments={appointments} />
       )}
     </div>
   );

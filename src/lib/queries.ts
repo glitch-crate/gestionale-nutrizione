@@ -1,3 +1,4 @@
+import { romeDateKey, romeDayStart, romeDayEnd, isoDow as isoDowOf } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import type { Appointment, AppointmentStatus, Client } from "@/types";
 
@@ -39,10 +40,9 @@ const APPOINTMENT_SELECT =
 
 export async function getTodayAppointments(): Promise<Appointment[]> {
   const supabase = await createClient();
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+  const todayKey = romeDateKey();
+  const start = romeDayStart(todayKey);
+  const end = romeDayEnd(todayKey);
 
   const { data } = await supabase
     .from("appointments")
@@ -56,8 +56,7 @@ export async function getTodayAppointments(): Promise<Appointment[]> {
 
 export async function getUpcomingAppointments(limit = 5): Promise<Appointment[]> {
   const supabase = await createClient();
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+  const end = romeDayEnd(romeDateKey());
 
   const { data } = await supabase
     .from("appointments")
@@ -190,13 +189,13 @@ export async function getFreeSlotsCountToday(): Promise<number> {
   const duration = settings.default_slot_minutes ?? 30;
 
   const now = new Date();
-  const isoDow = String(((now.getDay() + 6) % 7) + 1); // 1=lun ... 7=dom
+  const isoDow = String(isoDowOf(romeDateKey(now))); // 1=lun ... 7=dom
   const windows = openingHours[isoDow] ?? [];
 
   if (windows.length === 0) return 0;
 
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
+  const todayStart = romeDayStart(romeDateKey(now)).toISOString();
+  const todayEnd = romeDayEnd(romeDateKey(now)).toISOString();
 
   const [{ data: todaysAppointments }, { data: todaysBlocks }] = await Promise.all([
     supabase

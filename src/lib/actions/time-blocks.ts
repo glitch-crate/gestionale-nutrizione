@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseInstant } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
-import { parseRomeLocalDateTime } from "@/lib/timezone";
 
 export type ActionResult = { success: true } | { success: false; error: string };
 
@@ -17,8 +17,8 @@ export async function createTimeBlockAction(formData: FormData): Promise<ActionR
     return { success: false, error: "Indica inizio e fine del blocco." };
   }
 
-  const start = parseRomeLocalDateTime(startsAt);
-  const end = parseRomeLocalDateTime(endsAt);
+  const start = parseInstant(startsAt);
+  const end = parseInstant(endsAt);
 
   if (end <= start) {
     return { success: false, error: "L'orario di fine deve essere dopo quello di inizio." };

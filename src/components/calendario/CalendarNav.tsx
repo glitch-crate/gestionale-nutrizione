@@ -2,9 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-function toDateParam(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
+import { addDaysToKey, romeDateKey } from "@/lib/timezone";
 
 export function CalendarNav({
   view,
@@ -24,13 +22,11 @@ export function CalendarNav({
   }
 
   function shift(days: number) {
-    const d = new Date(currentDate);
-    d.setDate(d.getDate() + days);
-    navigate(view, toDateParam(d));
+    navigate(view, addDaysToKey(currentDate, days));
   }
 
   const step = view === "giorno" ? 1 : 7;
-  const dateLabel = new Date(currentDate).toLocaleDateString("it-IT", {
+  const dateLabel = new Date(`${currentDate}T12:00:00Z`).toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: view === "giorno" ? "long" : undefined,
     day: "numeric",
     month: "long",
@@ -47,7 +43,7 @@ export function CalendarNav({
           ← Indietro
         </button>
         <button
-          onClick={() => navigate(view, toDateParam(new Date()))}
+          onClick={() => navigate(view, romeDateKey())}
           className="rounded-lg border border-[var(--color-line)] px-3 py-1.5 text-sm text-[var(--color-ink)] hover:border-[var(--color-accent)]"
         >
           Oggi

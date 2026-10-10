@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AppointmentStatus } from "@/types";
 
 function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("it-IT", {
+  return new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
     weekday: "long",
     day: "numeric",
     month: "long",

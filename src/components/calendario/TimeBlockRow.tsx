@@ -8,7 +8,7 @@ import type { TimeBlock } from "@/lib/queries";
 function formatRange(startsAt: string, endsAt: string) {
   const start = new Date(startsAt);
   const end = new Date(endsAt);
-  const time = (d: Date) => d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  const time = (d: Date) => d.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
   return `${time(start)} – ${time(end)}`;
 }
 

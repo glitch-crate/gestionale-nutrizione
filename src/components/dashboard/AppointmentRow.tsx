@@ -2,14 +2,14 @@ import type { Appointment } from "@/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("it-IT", {
+  return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome",
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
 function formatDay(iso: string) {
-  return new Date(iso).toLocaleDateString("it-IT", {
+  return new Date(iso).toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: "short",
     day: "numeric",
     month: "short",

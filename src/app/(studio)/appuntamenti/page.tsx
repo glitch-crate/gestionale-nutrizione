@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { AppointmentActions } from "@/components/appuntamenti/AppointmentActions";
 
 function formatDateTime(iso: string) {
-  const label = new Date(iso).toLocaleString("it-IT", {
+  const label = new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
     weekday: "short",
     day: "numeric",
     month: "short",

@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { AppointmentActions } from "@/components/appuntamenti/AppointmentActions";
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
 }
 
 export function DayView({ appointments }: { appointments: Appointment[] }) {

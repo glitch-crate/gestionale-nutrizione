@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     ]);
 
   const todayCount = todayAppointments.filter((a) => a.status !== "annullato").length;
-  const todayLabel = new Date().toLocaleDateString("it-IT", {
+  const todayLabel = new Date().toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
     weekday: "long",
     day: "numeric",
     month: "long",

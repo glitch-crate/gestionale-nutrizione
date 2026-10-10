@@ -99,16 +99,14 @@ export async function GET(request: NextRequest) {
     if (!client?.email) continue;
 
     const startsAt = new Date(appointment.starts_at);
-    const time = startsAt.toLocaleTimeString("it-IT", {
+    const time = startsAt.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Europe/Rome",
     });
-    const dateLabel = startsAt.toLocaleDateString("it-IT", {
+    const dateLabel = startsAt.toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
       weekday: "long",
       day: "numeric",
       month: "long",
-      timeZone: "Europe/Rome",
     });
 
     try {

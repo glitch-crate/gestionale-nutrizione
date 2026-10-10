@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { addDaysToKey, romeDateKey } from "@/lib/timezone";
 import type { Appointment } from "@/types";
 
 const STATUS_DOT: Record<string, string> = {
@@ -9,31 +10,27 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
 }
 
 export function WeekView({
-  weekStart,
+  weekStartKey,
   appointments,
 }: {
-  weekStart: Date;
+  weekStartKey: string;
   appointments: Appointment[];
 }) {
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const days = Array.from({ length: 7 }, (_, i) => addDaysToKey(weekStartKey, i));
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-7">
       {days.map((day) => {
-        const dayKey = day.toISOString().slice(0, 10);
+        const dayKey = day;
         const dayAppointments = appointments
-          .filter((a) => a.startsAt.slice(0, 10) === dayKey)
+          .filter((a) => romeDateKey(new Date(a.startsAt)) === dayKey)
           .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
-        const isToday = dayKey === new Date().toISOString().slice(0, 10);
+        const isToday = dayKey === romeDateKey();
 
         return (
           <div
@@ -43,7 +40,7 @@ export function WeekView({
             } bg-[var(--color-surface)]`}
           >
             <p className="text-sm font-medium text-[var(--color-ink)]">
-              {day.toLocaleDateString("it-IT", { weekday: "short", day: "numeric" })}
+              {new Date(`${day}T12:00:00Z`).toLocaleDateString("it-IT", { timeZone: "Europe/Rome", weekday: "short", day: "numeric" })}
             </p>
             <div className="mt-2 flex flex-col gap-1.5">
               {dayAppointments.length === 0 ? (

@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { parseInstant } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { getAvailableSlotsForDate } from "@/lib/queries";
-import { parseRomeLocalDateTime } from "@/lib/timezone";
 import type { AppointmentStatus } from "@/types";
 
 export async function getAvailableSlotsAction(
@@ -46,7 +46,7 @@ export async function createAppointmentAction(formData: FormData): Promise<Actio
     return { success: false, error: "Tipo di appuntamento non valido." };
   }
 
-  const start = new Date(startsAt);
+  const start = parseInstant(startsAt);
   const end = new Date(start.getTime() + type.duration_minutes * 60 * 1000);
 
   const { error } = await supabase.from("appointments").insert({
@@ -113,7 +113,7 @@ export async function rescheduleAppointmentAction(
 
   const durationMs =
     new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime();
-  const newStart = parseRomeLocalDateTime(newStartsAt);
+  const newStart = parseInstant(newStartsAt);
   const newEnd = new Date(newStart.getTime() + durationMs);
 
   const { error } = await supabase
