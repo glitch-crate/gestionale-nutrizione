@@ -18,7 +18,7 @@ export default async function AppuntamentiPage() {
   const from = new Date();
   from.setDate(from.getDate() - 7);
   const to = new Date();
-  to.setDate(to.getDate() + 30);
+  to.setDate(to.getDate() + 90);
 
   const appointments = await getAppointmentsInRange(from, to);
 
@@ -30,7 +30,7 @@ export default async function AppuntamentiPage() {
             Appuntamenti
           </h1>
           <p className="mt-1 text-[15px] text-[var(--color-muted)]">
-            Ultimi 7 giorni e prossimi 30
+            Ultimi 7 giorni e prossimi 90
           </p>
         </div>
         <Link
