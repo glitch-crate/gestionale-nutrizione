@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { addDaysToKey, romeDateKey } from "@/lib/timezone";
 import type { AvailableSlot } from "@/types";
+
+// Quanto in anticipo i clienti possono prenotare (circa due mesi).
+const BOOKING_WINDOW_DAYS = 60;
+// Il database restituisce al massimo 1000 righe per richiesta: scarichiamo
+// gli orari a blocchi di 15 giorni per non perdere gli ultimi giorni.
+const CHUNK_DAYS = 15;
+// Quanti giorni con orari mostrare prima di "Mostra altri giorni".
+const DAYS_PER_PAGE = 10;
 
 function formatDayLabel(iso: string) {
   const date = new Date(iso);
@@ -27,29 +36,36 @@ export function BookingCalendar() {
   const [booking, setBooking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<AvailableSlot | null>(null);
+  const [visibleDays, setVisibleDays] = useState(DAYS_PER_PAGE);
 
   async function loadSlots() {
     setLoading(true);
     setError(null);
     const supabase = createClient();
 
-    const from = new Date();
-    const to = new Date();
-    to.setDate(to.getDate() + 14);
-
-    const { data, error: rpcError } = await supabase.rpc("get_available_slots", {
-      p_from: from.toISOString().slice(0, 10),
-      p_to: to.toISOString().slice(0, 10),
-    });
+    const today = romeDateKey();
+    const requests = [];
+    for (let offset = 0; offset <= BOOKING_WINDOW_DAYS; offset += CHUNK_DAYS) {
+      requests.push(
+        supabase.rpc("get_available_slots", {
+          p_from: addDaysToKey(today, offset),
+          p_to: addDaysToKey(today, Math.min(offset + CHUNK_DAYS - 1, BOOKING_WINDOW_DAYS)),
+        }),
+      );
+    }
+    const results = await Promise.all(requests);
 
     setLoading(false);
 
-    if (rpcError) {
+    const failed = results.find((r) => r.error);
+    if (failed) {
       setError("Non è stato possibile caricare gli orari disponibili.");
       return;
     }
 
-    const mapped: AvailableSlot[] = (data ?? []).map((row: {
+    const data = results.flatMap((r) => r.data ?? []);
+
+    const mapped: AvailableSlot[] = data.map((row: {
       slot_start: string;
       slot_end: string;
       duration_minutes: number;
@@ -72,7 +88,7 @@ export function BookingCalendar() {
   const slotsByDay = useMemo(() => {
     const groups = new Map<string, AvailableSlot[]>();
     for (const slot of slots) {
-      const dayKey = slot.slotStart.slice(0, 10);
+      const dayKey = romeDateKey(new Date(slot.slotStart));
       if (!groups.has(dayKey)) groups.set(dayKey, []);
       groups.get(dayKey)!.push(slot);
     }
@@ -137,7 +153,7 @@ export function BookingCalendar() {
   if (slotsByDay.length === 0) {
     return (
       <p className="text-[15px] text-[var(--color-muted)]">
-        Nessuno slot disponibile nelle prossime due settimane. Contatta lo studio.
+        Nessuno slot disponibile nei prossimi due mesi. Contatta lo studio.
       </p>
     );
   }
@@ -147,7 +163,7 @@ export function BookingCalendar() {
       {error ? (
         <p className="text-sm text-[var(--color-status-cancelled)]">{error}</p>
       ) : null}
-      {slotsByDay.map(([day, daySlots]) => (
+      {slotsByDay.slice(0, visibleDays).map(([day, daySlots]) => (
         <div key={day} className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
           <h2 className="text-[15px] font-medium text-[var(--color-ink)]">
             {formatDayLabel(daySlots[0].slotStart)}
@@ -166,6 +182,14 @@ export function BookingCalendar() {
           </div>
         </div>
       ))}
+      {slotsByDay.length > visibleDays ? (
+        <button
+          onClick={() => setVisibleDays((n) => n + DAYS_PER_PAGE)}
+          className="min-h-[44px] rounded-lg border border-[var(--color-line)] px-4 py-2.5 text-[15px] font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+        >
+          Mostra altri giorni
+        </button>
+      ) : null}
     </div>
   );
 }
