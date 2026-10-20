@@ -45,12 +45,12 @@ test("giorno di Roma vicino a mezzanotte", () => {
   assert.equal(addDaysToKey("2026-10-25", 1), "2026-10-26");
   assert.equal(isoDow("2026-11-04"), 3);
 });
-test("disponibilità: 09-12 a passi di 45 min, escluso l'occupato 09:45-10:30 (ora solare)", () => {
+test("disponibilità: visita da 45 min, griglia da 20, escluso l'occupato 09:45-10:30 (ora solare)", () => {
   const slots = computeFreeSlots({
     dateKey: "2026-11-03", windows: [{ start: "09:00", end: "12:00" }], durationMinutes: 45,
     busy: [{ starts_at: "2026-11-03T08:45:00Z", ends_at: "2026-11-03T09:30:00Z" }], nowMs: 0,
   });
-  assert.deepEqual(slots.map(fmt), ["09:00", "10:30", "11:15"]);
+  assert.deepEqual(slots.map(fmt), ["09:00", "10:40", "11:00"]);
   assert.equal(slots[0], "2026-11-03T08:00:00.000Z");
 });
 test("disponibilità: ora legale (luglio) e due fasce (09-12 e 14:30-19)", () => {
@@ -63,9 +63,9 @@ test("disponibilità: ora legale (luglio) e due fasce (09-12 e 14:30-19)", () =>
 });
 test("disponibilità: giorni di cambio ora (29 mar, 25 ott)", () => {
   const a = computeFreeSlots({ dateKey: "2026-03-29", windows: [{ start: "09:00", end: "10:00" }], durationMinutes: 30, busy: [], nowMs: 0 });
-  assert.deepEqual(a, ["2026-03-29T07:00:00.000Z", "2026-03-29T07:30:00.000Z"]);
+  assert.deepEqual(a, ["2026-03-29T07:00:00.000Z", "2026-03-29T07:20:00.000Z"]);
   const b = computeFreeSlots({ dateKey: "2026-10-25", windows: [{ start: "09:00", end: "10:00" }], durationMinutes: 30, busy: [], nowMs: 0 });
-  assert.deepEqual(b, ["2026-10-25T08:00:00.000Z", "2026-10-25T08:30:00.000Z"]);
+  assert.deepEqual(b, ["2026-10-25T08:00:00.000Z", "2026-10-25T08:20:00.000Z"]);
 });
 test("disponibilità: gli orari passati e quelli occupati sono esclusi", () => {
   const now = Date.parse("2026-11-03T08:30:00Z"); // 09:30 Roma
@@ -73,5 +73,15 @@ test("disponibilità: gli orari passati e quelli occupati sono esclusi", () => {
     dateKey: "2026-11-03", windows: [{ start: "09:00", end: "11:00" }], durationMinutes: 30,
     busy: [{ starts_at: "2026-11-03T09:30:00Z", ends_at: "2026-11-03T10:00:00Z" }], nowMs: now,
   });
-  assert.deepEqual(slots.map(fmt), ["10:00"]); // 09:00 e 09:30 passati, 10:30-11:00 occupato
+  assert.deepEqual(slots.map(fmt), ["09:40", "10:00"]); // 09:00 e 09:20 passati, 10:20 e oltre toccano il blocco 10:30-11:00
+});
+test("disponibilità: trattamento da 60 min su griglia da 20, senza sovrapposizioni", () => {
+  const free = computeFreeSlots({ dateKey: "2026-11-03", windows: [{ start: "09:00", end: "12:00" }], durationMinutes: 60, busy: [], nowMs: 0 });
+  assert.deepEqual(free.map(fmt), ["09:00", "09:20", "09:40", "10:00", "10:20", "10:40", "11:00"]);
+  // occupato 10:00-10:20 Roma (09:00-09:20Z): restano solo gli orari che finiscono prima o iniziano dopo
+  const withBusy = computeFreeSlots({
+    dateKey: "2026-11-03", windows: [{ start: "09:00", end: "12:00" }], durationMinutes: 60,
+    busy: [{ starts_at: "2026-11-03T09:00:00Z", ends_at: "2026-11-03T09:20:00Z" }], nowMs: 0,
+  });
+  assert.deepEqual(withBusy.map(fmt), ["09:00", "10:20", "10:40", "11:00"]);
 });

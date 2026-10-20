@@ -84,19 +84,22 @@ export function computeFreeSlots(opts: {
   durationMinutes: number;
   busy: BusyRange[];
   nowMs: number;
+  /** Passo della griglia degli orari proposti (default: 20 minuti, o meno se la visita è più breve). */
+  stepMinutes?: number;
 }): string[] {
-  const step = opts.durationMinutes * 60000;
+  const duration = opts.durationMinutes * 60000;
+  const step = Math.min(opts.stepMinutes ?? 20, opts.durationMinutes) * 60000;
   const busy = opts.busy.map((b) => ({ s: new Date(b.starts_at).getTime(), e: new Date(b.ends_at).getTime() }));
   const slots: string[] = [];
   for (const w of opts.windows) {
     let cursor = parseRomeLocalDateTime(`${opts.dateKey}T${w.start}`).getTime();
     const end = parseRomeLocalDateTime(`${opts.dateKey}T${w.end}`).getTime();
-    while (cursor + step <= end) {
-      const slotEnd = cursor + step;
+    while (cursor + duration <= end) {
+      const slotEnd = cursor + duration;
       if (cursor > opts.nowMs && !busy.some((b) => b.s < slotEnd && b.e > cursor)) {
         slots.push(new Date(cursor).toISOString());
       }
-      cursor = slotEnd;
+      cursor += step;
     }
   }
   return slots;
