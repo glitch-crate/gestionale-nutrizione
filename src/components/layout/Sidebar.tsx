@@ -1,12 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/calendario", label: "Calendario" },
   { href: "/appuntamenti", label: "Appuntamenti" },
+  { href: "/richieste", label: "Richieste" },
   { href: "/clienti", label: "Clienti" },
   { href: "/impostazioni", label: "Impostazioni" },
 ];
@@ -21,6 +24,31 @@ export function Sidebar({
   professionalName?: string | null;
 }) {
   const pathname = usePathname();
+  const [pendingRequests, setPendingRequests] = useState(0);
+
+  // Quante richieste di spostamento aspettano una risposta (si aggiorna da solo).
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const supabase = createClient();
+        const { count } = await supabase
+          .from("reschedule_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "in_attesa")
+          .gt("expires_at", new Date().toISOString());
+        if (!cancelled) setPendingRequests(count ?? 0);
+      } catch {
+        // se non riesce, semplicemente non mostra il contatore
+      }
+    }
+    load();
+    const timer = setInterval(load, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [pathname]);
 
   return (
     <>
@@ -56,13 +84,18 @@ export function Sidebar({
                 key={item.href}
                 href={item.href}
                 onClick={onNavigate}
-                className={`rounded-lg px-3 py-2.5 text-[15px] transition-colors ${
+                className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-[15px] transition-colors ${
                   isActive
                     ? "bg-[var(--color-pine-light)] text-[var(--color-pine-text)] font-medium"
                     : "text-[var(--color-pine-text-muted)] hover:bg-[var(--color-pine-light)] hover:text-[var(--color-pine-text)]"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.href === "/richieste" && pendingRequests > 0 ? (
+                  <span className="rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-xs font-semibold text-white">
+                    {pendingRequests}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

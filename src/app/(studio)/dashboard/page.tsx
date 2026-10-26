@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { AppointmentRow } from "@/components/dashboard/AppointmentRow";
 import {
@@ -18,6 +19,15 @@ export default async function DashboardPage() {
       getFreeSlotsCountToday(),
       getClients(),
     ]);
+
+  // Richieste di spostamento in attesa di risposta (0 se la funzione non è ancora attiva).
+  const supabase = await createClient();
+  const { count: pendingRequestsCount } = await supabase
+    .from("reschedule_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "in_attesa")
+    .gt("expires_at", new Date().toISOString());
+  const pendingRequests = pendingRequestsCount ?? 0;
 
   const todayCount = todayAppointments.filter((a) => a.status !== "annullato").length;
   const todayLabel = new Date().toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
@@ -44,6 +54,20 @@ export default async function DashboardPage() {
           + Nuovo appuntamento
         </Link>
       </div>
+
+      {pendingRequests > 0 ? (
+        <Link
+          href="/richieste"
+          className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-status-pending)]/30 bg-[var(--color-status-pending-bg)] px-5 py-4 transition-colors hover:border-[var(--color-status-pending)]"
+        >
+          <p className="text-[15px] font-medium text-[var(--color-ink)]">
+            {pendingRequests === 1
+              ? "C'è 1 richiesta di spostamento da gestire"
+              : `Ci sono ${pendingRequests} richieste di spostamento da gestire`}
+          </p>
+          <span className="text-sm font-medium text-[var(--color-accent)]">Vai alle richieste</span>
+        </Link>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Appuntamenti oggi" value={todayCount} />

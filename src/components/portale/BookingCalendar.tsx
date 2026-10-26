@@ -155,7 +155,9 @@ export function BookingCalendar() {
       setError(
         rpcError.message.includes("non è più disponibile")
           ? "Questo orario è stato appena prenotato da qualcun altro. Scegline un altro."
-          : "Non è stato possibile completare la prenotazione. Riprova.",
+          : rpcError.message.includes("richiesta di spostamento")
+            ? "Hai una richiesta di spostamento in attesa: potrai prenotare di nuovo quando lo studio risponde."
+            : "Non è stato possibile completare la prenotazione. Riprova.",
       );
       await loadSlots(selectedType);
       return;
