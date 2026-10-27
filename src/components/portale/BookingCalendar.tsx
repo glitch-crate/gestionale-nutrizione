@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { addDaysToKey, romeDateKey } from "@/lib/timezone";
 import type { AvailableSlot } from "@/types";
@@ -31,6 +32,19 @@ function formatTime(iso: string) {
 }
 
 type BookingOption = { name: string; durationMinutes: number };
+// Se il cliente ha già un appuntamento in programma non può prenotarne altri
+// fino al giorno dopo la visita: gli orari li vede, ma non può sceglierli.
+type BookingLock = { startsAt: string; availableFrom: string };
+
+function formatKeyLabel(key: string) {
+  // "2026-10-30" -> "venerdì 30 ottobre" (mezzogiorno UTC: stessa data a Roma)
+  return new Date(`${key}T12:00:00Z`).toLocaleDateString("it-IT", {
+    timeZone: "Europe/Rome",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
 
 export function BookingCalendar() {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
@@ -41,6 +55,7 @@ export function BookingCalendar() {
   const [visibleDays, setVisibleDays] = useState(DAYS_PER_PAGE);
   const [options, setOptions] = useState<BookingOption[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [lock, setLock] = useState<BookingLock | null>(null);
 
   async function loadSlots(typeName: string | null = selectedType) {
     setLoading(true);
@@ -105,6 +120,13 @@ export function BookingCalendar() {
   useEffect(() => {
     async function init() {
       const supabase = createClient();
+      const { data: lockData } = await supabase.rpc("get_booking_lock");
+      const lockRow = (lockData ?? [])[0] as
+        | { lock_starts_at: string; available_from: string }
+        | undefined;
+      if (lockRow) {
+        setLock({ startsAt: lockRow.lock_starts_at, availableFrom: lockRow.available_from });
+      }
       const { data } = await supabase.rpc("get_booking_options");
       const loaded: BookingOption[] = (data ?? []).map(
         (row: { name: string; duration_minutes: number }) => ({
@@ -155,6 +177,8 @@ export function BookingCalendar() {
       setError(
         rpcError.message.includes("non è più disponibile")
           ? "Questo orario è stato appena prenotato da qualcun altro. Scegline un altro."
+          : rpcError.message.includes("già un appuntamento")
+            ? "Hai già un appuntamento in programma: potrai prenotarne un altro dal giorno successivo alla visita."
           : rpcError.message.includes("richiesta di spostamento")
             ? "Hai una richiesta di spostamento in attesa: potrai prenotare di nuovo quando lo studio risponde."
             : "Non è stato possibile completare la prenotazione. Riprova.",
@@ -163,8 +187,35 @@ export function BookingCalendar() {
       return;
     }
 
+    // Da ora il cliente ha un appuntamento in programma: gli orari restano visibili ma grigi.
+    setLock({
+      startsAt: slot.slotStart,
+      availableFrom: addDaysToKey(romeDateKey(new Date(slot.slotStart)), 1),
+    });
     setConfirmed(slot);
   }
+
+  const lockBanner = lock ? (
+    <div className="rounded-xl border border-[var(--color-status-pending)]/30 bg-[var(--color-status-pending-bg)] p-5">
+      <p className="text-[15px] font-medium text-[var(--color-ink)]">
+        Hai già un appuntamento: {formatDayLabel(lock.startsAt)} alle {formatTime(lock.startsAt)}
+      </p>
+      <p className="mt-1.5 text-[15px] text-[var(--color-ink)]">
+        Potrai prenotarne un altro da {formatKeyLabel(lock.availableFrom)}. Qui sotto vedi gli
+        orari liberi, ma per ora non puoi sceglierli.
+      </p>
+      <p className="mt-1.5 text-[15px] text-[var(--color-ink)]">
+        Se devi cambiare orario, vai su{" "}
+        <Link
+          href="/portale/i-miei-appuntamenti"
+          className="font-medium text-[var(--color-accent)] underline hover:text-[var(--color-accent-hover)]"
+        >
+          I miei appuntamenti
+        </Link>{" "}
+        e chiedi lo spostamento.
+      </p>
+    </div>
+  ) : null;
 
   const typeSelector =
     options.length > 1 ? (
@@ -202,15 +253,22 @@ export function BookingCalendar() {
           {formatDayLabel(confirmed.slotStart)} alle {formatTime(confirmed.slotStart)} —{" "}
           {confirmed.appointmentTypeName} ({confirmed.durationMinutes} min)
         </p>
-        <button
-          onClick={() => {
-            setConfirmed(null);
-            loadSlots(selectedType);
-          }}
-          className="mt-4 text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]"
+        <div className="mt-4 rounded-lg bg-[var(--color-surface)] p-4">
+          <p className="text-[15px] font-medium text-[var(--color-ink)]">
+            Puoi cambiare la tua prenotazione fino a 24 ore prima
+          </p>
+          <p className="mt-1.5 text-[15px] text-[var(--color-muted)]">
+            Vai su &ldquo;I miei appuntamenti&rdquo; e premi &ldquo;Chiedi di spostare&rdquo;: scegli un nuovo
+            orario e lo studio dovrà confermare. Finché non risponde, l&apos;appuntamento resta
+            com&apos;è. Per annullarlo, contatta lo studio.
+          </p>
+        </div>
+        <Link
+          href="/portale/i-miei-appuntamenti"
+          className="mt-4 inline-block text-sm font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]"
         >
-          Prenota un altro appuntamento
-        </button>
+          Vai a I miei appuntamenti
+        </Link>
       </div>
     );
   }
@@ -222,6 +280,7 @@ export function BookingCalendar() {
   if (error && slots.length === 0) {
     return (
       <div className="flex flex-col gap-6">
+        {lockBanner}
         {typeSelector}
         <p className="text-sm text-[var(--color-status-cancelled)]">{error}</p>
       </div>
@@ -231,6 +290,7 @@ export function BookingCalendar() {
   if (slotsByDay.length === 0) {
     return (
       <div className="flex flex-col gap-6">
+        {lockBanner}
         {typeSelector}
         <p className="text-[15px] text-[var(--color-muted)]">
           Nessuno slot disponibile nei prossimi due mesi. Contatta lo studio.
@@ -241,6 +301,7 @@ export function BookingCalendar() {
 
   return (
     <div className="flex flex-col gap-6">
+      {lockBanner}
       {typeSelector}
       {error ? (
         <p className="text-sm text-[var(--color-status-cancelled)]">{error}</p>
@@ -255,8 +316,12 @@ export function BookingCalendar() {
               <button
                 key={slot.slotStart}
                 onClick={() => handleBook(slot)}
-                disabled={booking === slot.slotStart}
-                className="min-h-[44px] rounded-lg border border-[var(--color-line)] px-3.5 py-2.5 text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:opacity-50"
+                disabled={lock !== null || booking === slot.slotStart}
+                className={`min-h-[44px] rounded-lg border px-3.5 py-2.5 text-[15px] font-medium transition-colors ${
+                  lock
+                    ? "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-canvas)] text-[var(--color-muted)] opacity-60"
+                    : "border-[var(--color-line)] text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:opacity-50"
+                }`}
               >
                 {booking === slot.slotStart ? "Prenoto…" : formatTime(slot.slotStart)}
               </button>
