@@ -32,19 +32,9 @@ function formatTime(iso: string) {
 }
 
 type BookingOption = { name: string; durationMinutes: number };
-// Se il cliente ha già un appuntamento in programma non può prenotarne altri
-// fino al giorno dopo la visita: gli orari li vede, ma non può sceglierli.
-type BookingLock = { startsAt: string; availableFrom: string };
-
-function formatKeyLabel(key: string) {
-  // "2026-10-30" -> "venerdì 30 ottobre" (mezzogiorno UTC: stessa data a Roma)
-  return new Date(`${key}T12:00:00Z`).toLocaleDateString("it-IT", {
-    timeZone: "Europe/Rome",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
+// Se il cliente ha già un appuntamento in programma (non ancora iniziato) non
+// può prenotarne altri: gli orari li vede, ma non può sceglierli.
+type BookingLock = { startsAt: string };
 
 export function BookingCalendar() {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
@@ -121,11 +111,9 @@ export function BookingCalendar() {
     async function init() {
       const supabase = createClient();
       const { data: lockData } = await supabase.rpc("get_booking_lock");
-      const lockRow = (lockData ?? [])[0] as
-        | { lock_starts_at: string; available_from: string }
-        | undefined;
+      const lockRow = (lockData ?? [])[0] as { lock_starts_at: string } | undefined;
       if (lockRow) {
-        setLock({ startsAt: lockRow.lock_starts_at, availableFrom: lockRow.available_from });
+        setLock({ startsAt: lockRow.lock_starts_at });
       }
       const { data } = await supabase.rpc("get_booking_options");
       const loaded: BookingOption[] = (data ?? []).map(
@@ -178,7 +166,7 @@ export function BookingCalendar() {
         rpcError.message.includes("non è più disponibile")
           ? "Questo orario è stato appena prenotato da qualcun altro. Scegline un altro."
           : rpcError.message.includes("già un appuntamento")
-            ? "Hai già un appuntamento in programma: potrai prenotarne un altro dal giorno successivo alla visita."
+            ? "Hai già un appuntamento in programma: potrai prenotarne un altro dall'inizio della visita."
           : rpcError.message.includes("richiesta di spostamento")
             ? "Hai una richiesta di spostamento in attesa: potrai prenotare di nuovo quando lo studio risponde."
             : "Non è stato possibile completare la prenotazione. Riprova.",
@@ -188,10 +176,7 @@ export function BookingCalendar() {
     }
 
     // Da ora il cliente ha un appuntamento in programma: gli orari restano visibili ma grigi.
-    setLock({
-      startsAt: slot.slotStart,
-      availableFrom: addDaysToKey(romeDateKey(new Date(slot.slotStart)), 1),
-    });
+    setLock({ startsAt: slot.slotStart });
     setConfirmed(slot);
   }
 
@@ -201,8 +186,8 @@ export function BookingCalendar() {
         Hai già un appuntamento: {formatDayLabel(lock.startsAt)} alle {formatTime(lock.startsAt)}
       </p>
       <p className="mt-1.5 text-[15px] text-[var(--color-ink)]">
-        Potrai prenotarne un altro da {formatKeyLabel(lock.availableFrom)}. Qui sotto vedi gli
-        orari liberi, ma per ora non puoi sceglierli.
+        Potrai prenotarne un altro dall&apos;inizio della visita. Qui sotto vedi gli orari liberi,
+        ma per ora non puoi sceglierli.
       </p>
       <p className="mt-1.5 text-[15px] text-[var(--color-ink)]">
         Se devi cambiare orario, vai su{" "}
