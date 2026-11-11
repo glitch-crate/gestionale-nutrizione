@@ -1,55 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { RescheduleButton, WithdrawButton } from "@/components/portale/RescheduleControls";
-import type { AppointmentStatus } from "@/types";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { RescheduleButton, WithdrawButton } from "@/components/portale/i-miei-appuntamenti/RescheduleControls";
+import { formatDateTimeLong as formatDateTime } from "@/lib/format";
+import {
+  getMyAppointments,
+  getMyRescheduleRequests,
+  type MyRescheduleRequest,
+} from "@/lib/queries/portale/appuntamenti";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-type RequestRow = {
-  id: string;
-  appointment_id: string;
-  old_starts_at: string;
-  new_starts_at: string;
-  status: string;
-  expires_at: string;
-  created_at: string;
-};
-
 export default async function IMieiAppuntamentiPage() {
-  const supabase = await createClient();
-
-  // Grazie alla RLS, questa query restituisce SOLO gli appuntamenti del
-  // cliente autenticato: non serve (e non basterebbe) filtrare a mano.
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select("id, starts_at, ends_at, status, appointment_types(name)")
-    .order("starts_at", { ascending: false });
-
-  // Richieste di spostamento del cliente (anche qui filtra la RLS).
-  // Se la funzione non è ancora attiva nel database, l'elenco resta vuoto.
-  const { data: requestsData } = await supabase
-    .from("reschedule_requests")
-    .select("id, appointment_id, old_starts_at, new_starts_at, status, expires_at, created_at")
-    .order("created_at", { ascending: false });
-  const requests = (requestsData ?? []) as RequestRow[];
+  const [appointments, requests] = await Promise.all([getMyAppointments(), getMyRescheduleRequests()]);
 
   const now = new Date().getTime();
-  const isActive = (r: RequestRow) => r.status === "in_attesa" && new Date(r.expires_at).getTime() > now;
+  const isActive = (r: MyRescheduleRequest) =>
+    r.status === "in_attesa" && new Date(r.expires_at).getTime() > now;
   const hasPending = requests.some(isActive);
 
   return (
     <div className="flex flex-col gap-2">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+      <h1 className="font-display text-2xl text-[var(--color-ink)]">
         I miei appuntamenti
       </h1>
       <p className="mb-4 text-[15px] text-[var(--color-muted)]">
@@ -57,7 +27,7 @@ export default async function IMieiAppuntamentiPage() {
         Per annullarlo, contatta direttamente lo studio.
       </p>
 
-      {!appointments || appointments.length === 0 ? (
+      {appointments.length === 0 ? (
         <p className="text-[15px] text-[var(--color-muted)]">
           Non hai ancora nessun appuntamento prenotato.
         </p>
@@ -88,11 +58,10 @@ export default async function IMieiAppuntamentiPage() {
                       {formatDateTime(appointment.starts_at)}
                     </p>
                     <p className="text-sm text-[var(--color-muted)]">
-                      {(appointment.appointment_types as unknown as { name: string } | null)?.name ??
-                        "Appuntamento"}
+                      {appointment.appointment_type_name ?? "Appuntamento"}
                     </p>
                   </div>
-                  <StatusBadge status={appointment.status as AppointmentStatus} />
+                  <StatusBadge status={appointment.status} />
                 </div>
 
                 {pending ? (

@@ -10,14 +10,6 @@ export type AppointmentStatus =
   | "completato"
   | "annullato";
 
-export interface AppointmentType {
-  id: string;
-  studioId: string;
-  name: string;
-  durationMinutes: number;
-  active: boolean;
-}
-
 export interface Client {
   id: string;
   studioId: string;
@@ -46,14 +38,6 @@ export interface Appointment {
   appointmentTypeName?: string;
 }
 
-export interface StudioSettings {
-  id: string;
-  studioId: string;
-  businessName: string;
-  timezone: string;
-  defaultSlotMinutes: number;
-}
-
 // Portale cliente
 export interface AvailableSlot {
   slotStart: string; // ISO datetime
@@ -62,10 +46,23 @@ export interface AvailableSlot {
   appointmentTypeName: string;
 }
 
-export interface MyAppointment {
+// Calendario studio: fascia oraria in cui non si ricevono appuntamenti
+export interface TimeBlock {
   id: string;
   startsAt: string;
   endsAt: string;
-  status: AppointmentStatus;
-  appointmentTypeName?: string;
+  reason: string | null;
 }
+
+// Impostazioni studio: fasce di apertura per giorno ISO ("1" = lunedì … "7" = domenica)
+export interface TimeWindow {
+  start: string; // "HH:mm"
+  end: string; // "HH:mm"
+}
+export type OpeningHours = Record<string, TimeWindow[]>;
+
+// Richieste di spostamento fatte dai clienti
+export type RescheduleRequestStatus = "in_attesa" | "approvata" | "rifiutata" | "annullata" | "scaduta";
+
+// Esito di una server action: in caso di errore, un messaggio da mostrare all'utente
+export type ActionResult = { success: true } | { success: false; error: string };

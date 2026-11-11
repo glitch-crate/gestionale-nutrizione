@@ -1,36 +1,40 @@
 @import "tailwindcss";
 
 /*
-  Design tokens — Gestionale Studio Nutrizione
-  Palette pensata per uno studio professionale: calda ma seria,
-  non clinica-fredda, non "wellness pastello". Il verde pino scuro
-  della sidebar richiama concentrazione e cura; l'accento terracotta
-  è usato con moderazione solo per le azioni principali.
+  Design tokens — Gestionale Studio Nutrizione.
+  Le regole complete (quando usare cosa e perché) sono in DESIGN.md.
+  "Un quaderno, non un gestionale": avorio, inchiostro, verde pino per la
+  barra dello studio e un solo accento terracotta per l'azione principale.
 */
 
 :root {
-  --color-canvas: #f6f4ee;      /* sfondo pagina, avorio caldo */
-  --color-surface: #ffffff;      /* superficie card */
-  --color-ink: #20261f;          /* testo principale, verde-antracite */
-  --color-muted: #6f7568;        /* testo secondario */
-  --color-line: #e4e0d3;         /* bordi hairline */
+  --color-canvas: #f6f4ee;      /* avorio: sfondo pagina */
+  --color-surface: #ffffff;      /* carta: card, campi */
+  --color-ink: #20261f;          /* inchiostro: testo principale */
+  --color-muted: #646a5d;        /* grafite: testo secondario (5,08:1 sull'avorio) */
+  --color-line: #e4e0d3;         /* bordi sottili */
 
-  --color-pine: #16261e;         /* sidebar */
-  --color-pine-light: #24382d;   /* hover sidebar */
-  --color-pine-text: #e9ece5;    /* testo su sidebar */
+  --color-pine: #16261e;         /* barra laterale dello studio */
+  --color-pine-light: #24382d;   /* voce attiva / hover nella barra */
+  --color-pine-text: #e9ece5;
   --color-pine-text-muted: #9fab9c;
 
-  --color-accent: #ad5330;       /* azione primaria (CTA) */
-  --color-accent-hover: #8f4326;
+  --color-accent: #ad5330;       /* terracotta: una sola azione principale */
+  --color-accent-hover: #8f4326; /* anche testo su argilla (5,41:1) */
 
-  --color-status-pending: #b8862c;   /* da confermare */
+  --color-salvia: #dfe6da;       /* fascia di intestazione del portale */
+  --color-argilla: #f1dfd3;      /* orario scelto */
+
+  --color-status-pending: #8a5f14;   /* da confermare (4,80:1 sul suo sfondo) */
   --color-status-pending-bg: #f6ecd8;
   --color-status-confirmed: #2f6b4f; /* confermato */
   --color-status-confirmed-bg: #e4efe7;
   --color-status-done: #5b6258;      /* completato */
   --color-status-done-bg: #ecebe5;
-  --color-status-cancelled: #a04a3a; /* annullato */
+  --color-status-cancelled: #a04a3a; /* annullato, errori */
   --color-status-cancelled-bg: #f3e4df;
+
+  --ease-enter: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 @theme inline {
@@ -45,12 +49,47 @@
   --color-pine-text-muted: var(--color-pine-text-muted);
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
-  --font-display: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
-  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-salvia: var(--color-salvia);
+  --color-argilla: var(--color-argilla);
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Titoli e domande: Fraunces corsivo, morbido. */
+@utility font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 100, "opsz" 72;
+  letter-spacing: -0.01em;
+}
+
+/* Orari e numeri grandi: Fraunces dritto, cifre tutte della stessa larghezza. */
+@utility font-figures {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: normal;
+  font-variation-settings: "SOFT" 100, "opsz" 24;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Movimento calmo: il pannello di conferma sale, il biglietto si posa. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes settle {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-sheet-up { animation: sheet-up 240ms var(--ease-enter) both; }
+.animate-settle { animation: settle 400ms var(--ease-enter) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet-up,
+  .animate-settle { animation: none; }
 }

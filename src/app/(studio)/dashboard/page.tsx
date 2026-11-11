@@ -1,46 +1,43 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { AppointmentRow } from "@/components/dashboard/AppointmentRow";
+import { StatCard } from "@/components/studio/dashboard/StatCard";
+import { AppointmentRow } from "@/components/studio/dashboard/AppointmentRow";
+import { formatDayLong } from "@/lib/format";
 import {
-  getClientCount,
-  getClients,
-  getFreeSlotsCountToday,
+  countUpcomingAppointments,
   getTodayAppointments,
   getUpcomingAppointments,
-} from "@/lib/queries";
+} from "@/lib/queries/studio/appuntamenti";
+import { getClientCount, getRecentClients } from "@/lib/queries/studio/clienti";
+import { getFreeSlotsCountToday } from "@/lib/queries/studio/dashboard";
+import { countPendingRescheduleRequests } from "@/lib/queries/studio/richieste";
 
 export default async function DashboardPage() {
-  const [todayAppointments, upcomingAppointments, clientCount, freeSlotsToday, recentClients] =
-    await Promise.all([
-      getTodayAppointments(),
-      getUpcomingAppointments(5),
-      getClientCount(),
-      getFreeSlotsCountToday(),
-      getClients(),
-    ]);
-
-  // Richieste di spostamento in attesa di risposta (0 se la funzione non è ancora attiva).
-  const supabase = await createClient();
-  const { count: pendingRequestsCount } = await supabase
-    .from("reschedule_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "in_attesa")
-    .gt("expires_at", new Date().toISOString());
-  const pendingRequests = pendingRequestsCount ?? 0;
+  const [
+    todayAppointments,
+    upcomingAppointments,
+    nextWeekCount,
+    clientCount,
+    freeSlotsToday,
+    recentClients,
+    pendingRequests,
+  ] = await Promise.all([
+    getTodayAppointments(),
+    getUpcomingAppointments(5),
+    countUpcomingAppointments(7),
+    getClientCount(),
+    getFreeSlotsCountToday(),
+    getRecentClients(4),
+    countPendingRescheduleRequests(),
+  ]);
 
   const todayCount = todayAppointments.filter((a) => a.status !== "annullato").length;
-  const todayLabel = new Date().toLocaleDateString("it-IT", { timeZone: "Europe/Rome",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const todayLabel = formatDayLong(new Date().toISOString());
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+          <h1 className="font-display text-2xl text-[var(--color-ink)]">
             Buongiorno
           </h1>
           <p className="mt-1 text-[15px] text-[var(--color-muted)]">
@@ -72,7 +69,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Appuntamenti oggi" value={todayCount} />
         <StatCard label="Slot liberi oggi" value={freeSlotsToday} />
-        <StatCard label="Prossimi 7 giorni" value={upcomingAppointments.length} />
+        <StatCard label="Prossimi 7 giorni" value={nextWeekCount} />
         <StatCard label="Clienti totali" value={clientCount} />
       </div>
 
@@ -128,7 +125,7 @@ export default async function DashboardPage() {
           <p className="mt-3 text-[15px] text-[var(--color-muted)]">Nessun cliente ancora.</p>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {recentClients.slice(0, 4).map((client) => (
+            {recentClients.map((client) => (
               <Link
                 key={client.id}
                 href={`/clienti/${client.id}`}

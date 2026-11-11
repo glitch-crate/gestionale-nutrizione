@@ -1,19 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getClientAppointments, getClientById } from "@/lib/queries";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ExistingClientToggle } from "@/components/clienti/ExistingClientToggle";
-import { DeleteClientButton } from "@/components/clienti/DeleteClientButton";
-
-function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { getClientAppointments } from "@/lib/queries/studio/appuntamenti";
+import { getClientById } from "@/lib/queries/studio/clienti";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ExistingClientToggle } from "@/components/studio/clienti/ExistingClientToggle";
+import { DeleteClientButton } from "@/components/studio/clienti/DeleteClientButton";
+import { formatDate, formatDateTimeShort } from "@/lib/format";
 
 export default async function ClienteDettaglioPage({
   params,
@@ -21,13 +13,11 @@ export default async function ClienteDettaglioPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = await getClientById(id);
+  const [client, appointments] = await Promise.all([getClientById(id), getClientAppointments(id)]);
 
   if (!client) {
     notFound();
   }
-
-  const appointments = await getClientAppointments(id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -36,7 +26,7 @@ export default async function ClienteDettaglioPage({
           <Link href="/clienti" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]">
             ← Tutti i clienti
           </Link>
-          <h1 className="mt-2 font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+          <h1 className="mt-2 font-display text-2xl text-[var(--color-ink)]">
             {client.firstName} {client.lastName}
           </h1>
         </div>
@@ -56,7 +46,7 @@ export default async function ClienteDettaglioPage({
           <div>
             <dt className="text-sm text-[var(--color-muted)]">Cliente dal</dt>
             <dd className="text-[var(--color-ink)]">
-              {new Date(client.createdAt).toLocaleDateString("it-IT", { timeZone: "Europe/Rome" })}
+              {formatDate(client.createdAt)}
             </dd>
           </div>
           {client.notes ? (
@@ -91,7 +81,7 @@ export default async function ClienteDettaglioPage({
             >
               <div>
                 <p className="text-[15px] font-medium text-[var(--color-ink)]">
-                  {formatDateTime(appointment.startsAt)}
+                  {formatDateTimeShort(appointment.startsAt)}
                 </p>
                 <p className="text-sm text-[var(--color-muted)]">{appointment.appointmentTypeName}</p>
               </div>

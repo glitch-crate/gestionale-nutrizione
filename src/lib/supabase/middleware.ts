@@ -17,10 +17,12 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Se Supabase non è ancora configurato (STEP 4/5 in corso), non blocchiamo
-  // lo sviluppo della UI: lasciamo passare la richiesta così le pagine con
-  // dati mock restano visibili. Da rimuovere quando l'auth sarà collegata.
+  // Senza configurazione Supabase: in sviluppo lasciamo passare (per vedere
+  // l'interfaccia), in produzione chiudiamo tutto invece di aprire tutto.
   if (!supabaseUrl || !supabaseAnonKey) {
+    if (process.env.NODE_ENV === "production") {
+      return new NextResponse("Servizio non configurato", { status: 503 });
+    }
     return response;
   }
 
@@ -41,17 +43,25 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() rinnova la sessione se è scaduta e verifica il token in
+  // locale (firma con la chiave pubblica del progetto e scadenza), senza
+  // chiamare Supabase a ogni richiesta come faceva getUser().
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
-  const isPublicPath = PUBLIC_PATHS.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
+  // Corrispondenza esatta o sotto-percorso: "/privacy" non deve rendere
+  // pubblico anche "/privacy-qualcosa".
+  const pathname = request.nextUrl.pathname;
+  const isPublicPath = PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
   if (!user && !isPublicPath) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
+    // I clienti tornano al login del portale, non a quello dello studio.
+    loginUrl.pathname =
+      pathname === "/portale" || pathname.startsWith("/portale/") ? "/portale/login" : "/login";
+    loginUrl.search = "";
     return NextResponse.redirect(loginUrl);
   }
 

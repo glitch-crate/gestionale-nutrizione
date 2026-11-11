@@ -1,21 +1,13 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session";
 
+// Smistamento iniziale: il professionista va al gestionale, il cliente al portale.
 export default async function RootPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, professional } = await getCurrentUser();
 
   if (!user) {
     redirect("/login");
   }
-
-  const { data: professional } = await supabase
-    .from("professionals")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
 
   redirect(professional ? "/dashboard" : "/portale/prenota");
 }

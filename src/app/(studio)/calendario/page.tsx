@@ -1,11 +1,12 @@
 import { romeDateKey, addDaysToKey, isoDow, romeDayStart, romeDayEnd } from "@/lib/timezone";
 import Link from "next/link";
-import { getAppointmentsInRange, getTimeBlocksInRange } from "@/lib/queries";
-import { CalendarNav } from "@/components/calendario/CalendarNav";
-import { DayView } from "@/components/calendario/DayView";
-import { WeekView } from "@/components/calendario/WeekView";
-import { BlockTimeForm } from "@/components/calendario/BlockTimeForm";
-import { TimeBlockRow } from "@/components/calendario/TimeBlockRow";
+import { getAppointmentsInRange } from "@/lib/queries/studio/appuntamenti";
+import { getTimeBlocksInRange } from "@/lib/queries/studio/calendario";
+import { CalendarNav } from "@/components/studio/calendario/CalendarNav";
+import { DayView } from "@/components/studio/calendario/DayView";
+import { WeekView } from "@/components/studio/calendario/WeekView";
+import { BlockTimeForm } from "@/components/studio/calendario/BlockTimeForm";
+import { TimeBlockRow } from "@/components/studio/calendario/TimeBlockRow";
 
 export default async function CalendarioPage({
   searchParams,
@@ -28,7 +29,7 @@ export default async function CalendarioPage({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+        <h1 className="font-display text-2xl text-[var(--color-ink)]">
           Calendario
         </h1>
         <div className="flex flex-wrap gap-2">

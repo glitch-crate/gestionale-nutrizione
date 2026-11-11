@@ -1,26 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
-import { OpeningHoursForm } from "@/components/impostazioni/OpeningHoursForm";
-import { AppointmentTypeRow } from "@/components/impostazioni/AppointmentTypeRow";
+import { OpeningHoursForm } from "@/components/studio/impostazioni/OpeningHoursForm";
+import { AppointmentTypeRow } from "@/components/studio/impostazioni/AppointmentTypeRow";
+import { getAllAppointmentTypes, getStudioSettings } from "@/lib/queries/studio/impostazioni";
 
 export default async function ImpostazioniPage() {
-  const supabase = await createClient();
-
-  const { data: settings } = await supabase
-    .from("studio_settings")
-    .select("business_name, opening_hours")
-    .maybeSingle();
-
-  const { data: appointmentTypes } = await supabase
-    .from("appointment_types")
-    .select("id, name, duration_minutes, active")
-    .order("duration_minutes", { ascending: false });
-
-  const openingHours =
-    (settings?.opening_hours as Record<string, { start: string; end: string }[]>) ?? {};
+  const [{ businessName, openingHours }, appointmentTypes] = await Promise.all([
+    getStudioSettings(),
+    getAllAppointmentTypes(),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+      <h1 className="font-display text-2xl text-[var(--color-ink)]">
         Impostazioni
       </h1>
 
@@ -29,7 +19,7 @@ export default async function ImpostazioniPage() {
           Studio e orari di apertura
         </h2>
         <OpeningHoursForm
-          businessName={settings?.business_name ?? "Studio"}
+          businessName={businessName}
           openingHours={openingHours}
         />
         <p className="mt-4 text-sm text-[var(--color-muted)]">
@@ -43,7 +33,7 @@ export default async function ImpostazioniPage() {
           Tipi di appuntamento
         </h2>
         <div className="flex flex-col gap-3">
-          {(appointmentTypes ?? []).map((type) => (
+          {appointmentTypes.map((type) => (
             <AppointmentTypeRow
               key={type.id}
               id={type.id}
@@ -53,8 +43,8 @@ export default async function ImpostazioniPage() {
           ))}
         </div>
         <p className="mt-4 text-sm text-[var(--color-muted)]">
-          "Primo incontro" viene assegnato automaticamente al primo appuntamento di ogni
-          cliente; "Controllo" a tutti quelli successivi. La durata determina quanto durano gli
+          &quot;Primo incontro&quot; viene assegnato automaticamente al primo appuntamento di ogni
+          cliente; &quot;Controllo&quot; a tutti quelli successivi. La durata determina quanto durano gli
           slot che il cliente vede nel portale.
         </p>
       </div>

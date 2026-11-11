@@ -1,18 +1,8 @@
 import Link from "next/link";
-import { getAppointmentsInRange } from "@/lib/queries";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { AppointmentActions } from "@/components/appuntamenti/AppointmentActions";
-
-function formatDateTime(iso: string) {
-  const label = new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome",
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
+import { getAppointmentsInRange } from "@/lib/queries/studio/appuntamenti";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { AppointmentActions } from "@/components/studio/appuntamenti/AppointmentActions";
+import { capitalize, formatDateTimeShort } from "@/lib/format";
 
 export default async function AppuntamentiPage() {
   const from = new Date();
@@ -26,7 +16,7 @@ export default async function AppuntamentiPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+          <h1 className="font-display text-2xl text-[var(--color-ink)]">
             Appuntamenti
           </h1>
           <p className="mt-1 text-[15px] text-[var(--color-muted)]">
@@ -55,7 +45,7 @@ export default async function AppuntamentiPage() {
                   {appointment.clientName}
                 </p>
                 <p className="text-sm text-[var(--color-muted)]">
-                  {formatDateTime(appointment.startsAt)} · {appointment.appointmentTypeName}
+                  {capitalize(formatDateTimeShort(appointment.startsAt))} ·{appointment.appointmentTypeName}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3 sm:gap-4">

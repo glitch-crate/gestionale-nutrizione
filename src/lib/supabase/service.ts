@@ -1,3 +1,4 @@
+import "server-only";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 // ATTENZIONE: usa la chiave "service role", che ignora completamente le

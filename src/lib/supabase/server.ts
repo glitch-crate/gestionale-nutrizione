@@ -24,7 +24,7 @@ export async function createClient() {
             // setAll può essere chiamato da un Server Component: in quel
             // caso i cookie non possono essere scritti direttamente.
             // Va bene ignorare l'errore se c'è il middleware a rinnovare
-            // la sessione (vedi src/middleware.ts).
+            // la sessione (vedi src/proxy.ts).
           }
         },
       },

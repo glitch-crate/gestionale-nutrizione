@@ -1,5 +1,9 @@
+// Fuso orario dello studio: tutte le date sono salvate in UTC e mostrate/
+// interpretate in questo fuso.
+export const TIMEZONE = "Europe/Rome";
+
 const ROME_PARTS = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit",
+  timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
   hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
 });
 
@@ -27,7 +31,7 @@ export function parseRomeLocalDateTime(value: string): Date {
 /** Data (YYYY-MM-DD) nel fuso Europe/Rome per un dato istante. */
 export function romeDateKey(date: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Rome",
+    timeZone: TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -65,7 +69,7 @@ export function parseInstant(value: string): Date {
 /** Istante -> "YYYY-MM-DDTHH:mm" in ora di Roma, per i campi datetime-local. */
 export function toRomeInputValue(iso: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit",
+    timeZone: TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).formatToParts(new Date(iso));
   const g = (t: string) => parts.find((p) => p.type === t)!.value;

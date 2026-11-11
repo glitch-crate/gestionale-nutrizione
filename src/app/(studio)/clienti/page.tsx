@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getClients } from "@/lib/queries";
-import { ClientSearchBar } from "@/components/clienti/ClientSearchBar";
-import { NewClientForm } from "@/components/clienti/NewClientForm";
+import { getClients } from "@/lib/queries/studio/clienti";
+import { ClientSearchBar } from "@/components/studio/clienti/ClientSearchBar";
+import { NewClientForm } from "@/components/studio/clienti/NewClientForm";
 
 export default async function ClientiPage({
   searchParams,
@@ -15,7 +15,7 @@ export default async function ClientiPage({
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+          <h1 className="font-display text-2xl text-[var(--color-ink)]">
             Clienti
           </h1>
           <p className="mt-1 text-[15px] text-[var(--color-muted)]">

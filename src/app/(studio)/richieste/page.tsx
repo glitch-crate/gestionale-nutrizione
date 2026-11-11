@@ -1,58 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { RequestActions } from "@/components/richieste/RequestActions";
-
-type RequestRow = {
-  id: string;
-  old_starts_at: string;
-  new_starts_at: string;
-  expires_at: string;
-  status: string;
-  resolved_at: string | null;
-  clients: { first_name: string; last_name: string; phone: string } | null;
-  appointments: { appointment_types: { name: string } | null } | null;
-};
+import { RequestActions } from "@/components/studio/richieste/RequestActions";
+import { capitalize, formatDateTimeLong } from "@/lib/format";
+import {
+  getPendingRescheduleRequests,
+  getRecentlyResolvedRescheduleRequests,
+} from "@/lib/queries/studio/richieste";
 
 function formatDateTime(iso: string) {
-  const label = new Date(iso).toLocaleString("it-IT", {
-    timeZone: "Europe/Rome",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  return capitalize(formatDateTimeLong(iso));
 }
 
-const SELECT =
-  "id, old_starts_at, new_starts_at, expires_at, status, resolved_at, clients(first_name, last_name, phone), appointments(appointment_types(name))";
-
 export default async function RichiestePage() {
-  const supabase = await createClient();
-  const nowIso = new Date().toISOString();
-
-  const [{ data: pendingData }, { data: recentData }] = await Promise.all([
-    supabase
-      .from("reschedule_requests")
-      .select(SELECT)
-      .eq("status", "in_attesa")
-      .gt("expires_at", nowIso)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("reschedule_requests")
-      .select(SELECT)
-      .in("status", ["approvata", "rifiutata"])
-      .order("resolved_at", { ascending: false })
-      .limit(10),
+  const [pending, recent] = await Promise.all([
+    getPendingRescheduleRequests(),
+    getRecentlyResolvedRescheduleRequests(10),
   ]);
-
-  const pending = (pendingData ?? []) as unknown as RequestRow[];
-  const recent = (recentData ?? []) as unknown as RequestRow[];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+        <h1 className="font-display text-2xl text-[var(--color-ink)]">
           Richieste di spostamento
         </h1>
         <p className="mt-1 text-[15px] text-[var(--color-muted)]">

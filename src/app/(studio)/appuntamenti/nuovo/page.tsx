@@ -1,5 +1,6 @@
-import { getAppointmentTypes, getClients } from "@/lib/queries";
-import { NewAppointmentForm } from "@/components/appuntamenti/NewAppointmentForm";
+import { getActiveAppointmentTypes } from "@/lib/queries/studio/appuntamenti";
+import { getClients } from "@/lib/queries/studio/clienti";
+import { NewAppointmentForm } from "@/components/studio/appuntamenti/NewAppointmentForm";
 
 export default async function NuovoAppuntamentoPage({
   searchParams,
@@ -9,12 +10,12 @@ export default async function NuovoAppuntamentoPage({
   const { clientId } = await searchParams;
   const [clients, appointmentTypes] = await Promise.all([
     getClients(),
-    getAppointmentTypes(),
+    getActiveAppointmentTypes(),
   ]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl text-[var(--color-ink)]">
+      <h1 className="font-display text-2xl text-[var(--color-ink)]">
         Nuovo appuntamento
       </h1>
       <NewAppointmentForm

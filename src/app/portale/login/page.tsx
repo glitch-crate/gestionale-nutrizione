@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { PortaleLoginForm } from "@/components/portale/PortaleLoginForm";
+import { AuthCard, authLinkClass } from "@/components/shared/AuthCard";
+import { PortaleLoginForm } from "@/components/portale/auth/PortaleLoginForm";
+import { StudioContactLinks } from "@/components/portale/layout/StudioContacts";
 
+// Accesso dei clienti al portale prenotazioni.
 export default async function PortaleLoginPage({
   searchParams,
 }: {
@@ -8,39 +11,36 @@ export default async function PortaleLoginPage({
 }) {
   const { errore } = await searchParams;
 
+  const notice =
+    errore === "account_professionista" ? (
+      <>
+        Questo è l&apos;account del professionista, non un account cliente. Vai al{" "}
+        <Link href="/login" className="font-medium underline">
+          gestionale
+        </Link>
+        .
+      </>
+    ) : errore === "account_non_cliente" ? (
+      <>
+        Non è stato possibile collegare questo account a una scheda cliente. Contatta lo studio:{" "}
+        <StudioContactLinks />
+      </>
+    ) : null;
+
   return (
-    <main className="flex min-h-svh items-center justify-center bg-[var(--color-canvas)] px-4">
-      <div className="w-full max-w-sm rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-8">
-        <p className="font-[family-name:var(--font-display)] text-2xl italic text-[var(--color-ink)]">
-          Studio Nutrizione
-        </p>
-        <p className="mt-1 mb-6 text-[15px] text-[var(--color-muted)]">
-          Accedi per gestire i tuoi appuntamenti
-        </p>
-
-        {errore === "account_professionista" ? (
-          <div className="mb-6 rounded-lg border border-[var(--color-status-pending)]/30 bg-[var(--color-status-pending-bg)] p-4">
-            <p className="text-[15px] text-[var(--color-ink)]">
-              Questo è l&apos;account del professionista, non un account cliente. Vai al{" "}
-              <Link href="/login" className="font-medium underline">
-                gestionale
-              </Link>
-              .
-            </p>
-          </div>
-        ) : null}
-
-        <PortaleLoginForm />
-        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+    <AuthCard
+      subtitle="Accedi per gestire i tuoi appuntamenti"
+      notice={notice}
+      footer={
+        <>
           Non hai un account?{" "}
-          <Link
-            href="/portale/registrati"
-            className="font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)]"
-          >
+          <Link href="/portale/registrati" className={authLinkClass}>
             Registrati
           </Link>
-        </p>
-      </div>
-    </main>
+        </>
+      }
+    >
+      <PortaleLoginForm />
+    </AuthCard>
   );
 }
