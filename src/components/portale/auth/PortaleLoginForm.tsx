@@ -18,7 +18,7 @@ export function PortaleLoginForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,

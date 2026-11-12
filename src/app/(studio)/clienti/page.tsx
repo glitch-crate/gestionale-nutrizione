@@ -37,15 +37,13 @@ export default async function ClientiPage({
             <Link
               key={client.id}
               href={`/clienti/${client.id}`}
-              className="flex items-center justify-between gap-4 border-b border-[var(--color-line)] px-5 py-3.5 last:border-none hover:bg-[var(--color-canvas)]"
+              className="grid grid-cols-1 gap-0.5 border-b border-[var(--color-line)] px-4 py-3.5 last:border-none hover:bg-[var(--color-canvas)] sm:px-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1.4fr)] md:items-center md:gap-4"
             >
-              <div>
-                <p className="text-[15px] font-medium text-[var(--color-ink)]">
-                  {client.firstName} {client.lastName}
-                </p>
-                <p className="text-sm text-[var(--color-muted)]">{client.phone}</p>
-              </div>
-              <span className="text-sm text-[var(--color-muted)]">{client.email}</span>
+              <p className="truncate text-[15px] font-medium text-[var(--color-ink)]">
+                {client.firstName} {client.lastName}
+              </p>
+              <p className="whitespace-nowrap text-sm text-[var(--color-muted)]">{client.phone}</p>
+              <p className="truncate text-sm text-[var(--color-muted)] md:text-right">{client.email}</p>
             </Link>
           ))}
         </div>

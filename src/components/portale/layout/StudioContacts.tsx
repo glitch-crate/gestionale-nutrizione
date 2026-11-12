@@ -21,7 +21,7 @@ export function StudioContactLinks() {
 /** Piè di pagina del portale: dove contattare lo studio per annullare o per informazioni. */
 export function PortaleFooter() {
   return (
-    <footer className="border-t border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-4 text-center text-sm text-[var(--color-muted)] sm:px-6">
+    <footer className="border-t border-[var(--color-line)] bg-[var(--color-surface)] px-[22px] py-4 text-center text-sm text-[var(--color-muted)] sm:px-6">
       Per annullare un appuntamento o per qualsiasi informazione contatta lo studio:{" "}
       <span className="whitespace-nowrap">
         <StudioContactLinks />

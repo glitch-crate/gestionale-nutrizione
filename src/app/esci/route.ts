@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   // a questa pagina non può disconnettere qualcuno che sta usando la sua area.
   const { supabase, user, professional } = await getCurrentUser();
   if (user && Boolean(professional) === destination.professional) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
   }
 
   return NextResponse.redirect(new URL(destination.to, request.url));

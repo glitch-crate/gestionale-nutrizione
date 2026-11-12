@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
  * lettura è countPendingRescheduleRequests in lib/queries/studio/richieste.ts).
  */
 export async function fetchPendingRequestsCount(): Promise<number> {
-  const { count } = await createClient()
+  const { count } = await createClient("studio")
     .from("reschedule_requests")
     .select("id", { count: "exact", head: true })
     .eq("status", "in_attesa")

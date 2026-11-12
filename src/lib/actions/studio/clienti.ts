@@ -4,6 +4,22 @@ import { revalidatePath } from "next/cache";
 import { getProfessionalClient } from "@/lib/auth/session";
 import type { ActionResult } from "@/types";
 
+/**
+ * C'è già un altro cliente con questa email? Il confronto ignora maiuscole e
+ * spazi: il vincolo del database distingue "Mario@x.it" da "mario@x.it".
+ */
+async function emailInUse(
+  supabase: NonNullable<Awaited<ReturnType<typeof getProfessionalClient>>>,
+  email: string,
+  exceptClientId?: string,
+): Promise<boolean> {
+  const wanted = email.trim().toLowerCase();
+  // ilike senza caratteri jolly: "%" e "_" nell'email vanno resi letterali.
+  const pattern = wanted.replace(/[\\%_]/g, (c) => `\\${c}`);
+  const { data } = await supabase.from("clients").select("id, email").ilike("email", pattern);
+  return (data ?? []).some((c) => c.id !== exceptClientId && c.email.trim().toLowerCase() === wanted);
+}
+
 export async function createClientAction(formData: FormData): Promise<ActionResult> {
   const supabase = await getProfessionalClient();
   if (!supabase) return { success: false, error: "Non autorizzato." };
@@ -11,11 +27,14 @@ export async function createClientAction(formData: FormData): Promise<ActionResu
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const notes = String(formData.get("notes") ?? "").trim();
 
   if (!firstName || !lastName || !phone || !email) {
     return { success: false, error: "Compila tutti i campi obbligatori." };
+  }
+  if (await emailInUse(supabase, email)) {
+    return { success: false, error: "Esiste già un cliente con questa email." };
   }
 
   const { data: professional } = await supabase
@@ -54,7 +73,7 @@ export async function updateClientAction(clientId: string, formData: FormData): 
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const notes = String(formData.get("notes") ?? "").trim();
 
   if (!firstName || !lastName || !phone || !email) {
@@ -62,6 +81,9 @@ export async function updateClientAction(clientId: string, formData: FormData): 
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { success: false, error: "L'email non sembra valida." };
+  }
+  if (await emailInUse(supabase, email, clientId)) {
+    return { success: false, error: "Esiste già un cliente con questa email." };
   }
 
   const { data: updated, error } = await supabase

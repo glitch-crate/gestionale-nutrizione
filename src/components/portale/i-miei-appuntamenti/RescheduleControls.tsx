@@ -196,6 +196,7 @@ export function RescheduleButton({ appointmentId }: { appointmentId: string }) {
 export function WithdrawButton({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleWithdraw() {
@@ -203,6 +204,7 @@ export function WithdrawButton({ requestId }: { requestId: string }) {
     setError(null);
     const result = await cancelRescheduleRequestAction(requestId);
     setLoading(false);
+    setConfirming(false);
     if (!result.success) {
       setError(result.error);
       router.refresh();
@@ -211,10 +213,37 @@ export function WithdrawButton({ requestId }: { requestId: string }) {
     router.refresh();
   }
 
+  // Ritirare libera l'orario riservato: chiediamo conferma.
+  if (confirming) {
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-[15px] text-[var(--color-ink)]">
+          Ritirare la richiesta? L&apos;orario che avevi scelto torna disponibile per tutti.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleWithdraw}
+            disabled={loading}
+            className="min-h-[44px] rounded-lg bg-[var(--color-status-cancelled)] px-4 py-2.5 text-[15px] font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? "Ritiro…" : "Sì, ritira"}
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            disabled={loading}
+            className="min-h-[44px] rounded-lg border border-[var(--color-line)] px-4 py-2.5 text-[15px] font-medium text-[var(--color-ink)] disabled:opacity-50"
+          >
+            No
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
       <button
-        onClick={handleWithdraw}
+        onClick={() => setConfirming(true)}
         disabled={loading}
         className="min-h-[44px] self-start rounded-lg border border-[var(--color-line)] px-4 py-2.5 text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-status-cancelled)] hover:text-[var(--color-status-cancelled)] disabled:opacity-50"
       >

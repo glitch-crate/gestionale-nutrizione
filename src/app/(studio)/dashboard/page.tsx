@@ -34,8 +34,8 @@ export default async function DashboardPage() {
   const todayLabel = formatDayLong(new Date().toISOString());
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl text-[var(--color-ink)]">
             Buongiorno
@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/appuntamenti/nuovo"
-          className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+          className="w-fit shrink-0 rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
         >
           + Nuovo appuntamento
         </Link>
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       {pendingRequests > 0 ? (
         <Link
           href="/richieste"
-          className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-status-pending)]/30 bg-[var(--color-status-pending-bg)] px-5 py-4 transition-colors hover:border-[var(--color-status-pending)]"
+          className="flex flex-col gap-1 rounded-xl border border-[var(--color-status-pending)]/30 sm:flex-row sm:items-center sm:justify-between sm:gap-3 bg-[var(--color-status-pending-bg)] px-5 py-4 transition-colors hover:border-[var(--color-status-pending)]"
         >
           <p className="text-[15px] font-medium text-[var(--color-ink)]">
             {pendingRequests === 1
@@ -66,15 +66,15 @@ export default async function DashboardPage() {
         </Link>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard label="Appuntamenti oggi" value={todayCount} />
         <StatCard label="Slot liberi oggi" value={freeSlotsToday} />
         <StatCard label="Prossimi 7 giorni" value={nextWeekCount} />
         <StatCard label="Clienti totali" value={clientCount} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 lg:col-span-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 xl:col-span-2">
           <h2 className="text-[15px] font-medium text-[var(--color-ink)]">
             Agenda di oggi
           </h2>
@@ -124,14 +124,14 @@ export default async function DashboardPage() {
         {recentClients.length === 0 ? (
           <p className="mt-3 text-[15px] text-[var(--color-muted)]">Nessun cliente ancora.</p>
         ) : (
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
             {recentClients.map((client) => (
               <Link
                 key={client.id}
                 href={`/clienti/${client.id}`}
-                className="rounded-lg border border-[var(--color-line)] px-3.5 py-3 hover:border-[var(--color-accent)]"
+                className="min-w-0 rounded-lg border border-[var(--color-line)] px-3.5 py-3 hover:border-[var(--color-accent)]"
               >
-                <p className="text-[15px] font-medium text-[var(--color-ink)]">
+                <p className="truncate text-[15px] font-medium text-[var(--color-ink)]">
                   {client.firstName} {client.lastName}
                 </p>
                 <p className="mt-0.5 text-sm text-[var(--color-muted)]">{client.phone}</p>

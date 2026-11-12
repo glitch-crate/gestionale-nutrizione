@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { AREA_HEADER, areaForRequest, authCookieName } from "@/lib/supabase/area";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -12,7 +13,18 @@ const PUBLIC_PATHS = [
 ];
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // Area della richiesta (studio o portale): decide quale cookie di sessione
+  // usare, qui e nelle pagine/server action (tramite l'intestazione).
+  const area = areaForRequest(request.nextUrl.pathname, request.nextUrl.searchParams);
+  // Le intestazioni si ricostruiscono a ogni chiamata: dopo un rinnovo della
+  // sessione contengono anche i cookie aggiornati.
+  const next = () => {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(AREA_HEADER, area);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  };
+
+  let response = next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -27,6 +39,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: { name: authCookieName(area) },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -35,7 +48,7 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
-        response = NextResponse.next({ request });
+        response = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );

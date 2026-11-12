@@ -34,7 +34,7 @@ export function ForgotPasswordForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
     // Non serve più indicare redirectTo: non useremo il link dell'email,
     // solo il codice numerico che l'email contiene comunque.
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
@@ -64,7 +64,7 @@ export function ForgotPasswordForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
 
     const { error: verifyError } = await supabase.auth.verifyOtp({
       email,

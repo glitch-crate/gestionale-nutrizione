@@ -108,3 +108,12 @@ export function computeFreeSlots(opts: {
   }
   return slots;
 }
+
+/**
+ * Fino a quando ha senso una richiesta di spostamento: la scadenza salvata
+ * nel database oppure, se viene prima, l'inizio del nuovo orario richiesto
+ * (dopo, approvarla sposterebbe l'appuntamento nel passato).
+ */
+export function rescheduleDeadline(expiresAt: string, newStartsAt: string): string {
+  return new Date(expiresAt).getTime() <= new Date(newStartsAt).getTime() ? expiresAt : newStartsAt;
+}

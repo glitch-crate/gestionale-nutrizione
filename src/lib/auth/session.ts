@@ -37,52 +37,79 @@ export const getCurrentUser = cache(async () => {
   return { supabase, user, professional: (professional as CurrentProfessional | null) ?? null };
 });
 
-// Portale: crea la scheda cliente al primo accesso (dopo la conferma
-// dell'email) con i dati lasciati in registrazione, oppure la restituisce
-// se esiste già. Restituisce null se l'utente non è un cliente.
+// Portale: restituisce la scheda cliente dell'utente collegato oppure, al
+// primo accesso, la crea con i dati lasciati in registrazione (funzione del
+// database `ensure_client_profile`, che copia anche la risposta a "Sei già
+// cliente dello studio?": chi risponde "no" e non ha appuntamenti può
+// prenotare solo il "Primo incontro"). Restituisce null se l'utente non è un
+// cliente.
 //
-// La funzione `ensure_client_profile` del database di produzione è una
-// versione precedente: crea sempre una scheda nuova e non collega quella che
-// lo studio ha già inserito con la stessa email (fallirebbe sul vincolo di
-// email unica, e il cliente resterebbe fuori dal portale). Il collegamento lo
-// facciamo quindi qui, lato server, prima di chiamarla:
-// - solo se l'email dell'account è stata verificata (prova che è sua);
-// - solo verso una scheda senza account collegato.
-// Inoltre la vecchia funzione copia `is_existing_client` dai metadati
-// dell'account, che il cliente può impostare da sé: lo azzeriamo, perché
-// quel flag lo decide solo lo studio.
+// Chi era già stato inserito dallo studio con la stessa email viene collegato
+// in automatico alla sua scheda, ma SOLO se ha confermato l'email cliccando
+// il link ricevuto (vedi emailProvedByLink). Con la conferma disattivata in
+// Supabase l'email risulta "confermata" già alla registrazione, senza nessuna
+// prova: in quel caso non si collega niente, altrimenti chiunque potrebbe
+// registrarsi con l'email di un altro e prendersi la sua scheda.
 export async function ensureClientProfile() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email) return null;
 
-  const [{ data: existing }, { data: professional }] = await Promise.all([
-    supabase.from("clients").select("id").eq("auth_user_id", user.id).maybeSingle(),
-    supabase.from("professionals").select("id").eq("auth_user_id", user.id).maybeSingle(),
+  // Percorso veloce (quasi tutte le visite): il token si verifica in locale
+  // (getClaims, nessuna chiamata ad Auth) e, se la scheda esiste già, basta
+  // una lettura.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (!userId) return null;
+
+  const [{ data: own }, { data: professional }] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id, first_name, last_name, phone, email")
+      .eq("auth_user_id", userId)
+      .maybeSingle(),
+    supabase.from("professionals").select("id").eq("auth_user_id", userId).maybeSingle(),
   ]);
+  if (own) return own;
   // Il professionista non deve mai ricevere una scheda cliente.
   if (professional) return null;
 
-  if (!existing && user.email_confirmed_at) {
+  // Primo accesso: dati verificati dal server di Auth.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.email && emailProvedByLink(user)) {
     await linkExistingClientByEmail(user.id, user.email, user.user_metadata);
   }
 
   const { data, error } = await supabase.rpc("ensure_client_profile");
   if (error) {
+    // Caso tipico: lo studio ha già una scheda con questa email, ma l'email
+    // non è stata confermata con il link. Il login mostra un avviso.
     console.error("ensure_client_profile", error.message);
     return null;
   }
-
-  const claimed = user.user_metadata?.is_existing_client;
-  if (claimed === true || claimed === "true") {
-    await clearSelfDeclaredExistingFlag(user.id, user.user_metadata);
-  }
-
   return data ?? null;
 }
 
+/**
+ * L'email è stata confermata davvero, con il link ricevuto alla registrazione?
+ * - `confirmation_sent_at`: l'email di conferma è partita (con la conferma
+ *   automatica non parte nulla);
+ * - `email_confirmed_at` è successiva all'invio;
+ * - l'email non è mai stata cambiata dopo la registrazione (un cambio email
+ *   con la conferma automatica non darebbe nessuna prova).
+ */
+function emailProvedByLink(user: {
+  email_confirmed_at?: string;
+  confirmation_sent_at?: string;
+  email_change_sent_at?: string;
+  new_email?: string;
+}): boolean {
+  if (!user.email_confirmed_at || !user.confirmation_sent_at) return false;
+  if (user.email_change_sent_at || user.new_email) return false;
+  return new Date(user.email_confirmed_at).getTime() >= new Date(user.confirmation_sent_at).getTime();
+}
+
+/** Collega l'account all'unica scheda dello studio con la stessa email ancora senza account. */
 async function linkExistingClientByEmail(
   userId: string,
   email: string,
@@ -91,22 +118,26 @@ async function linkExistingClientByEmail(
   try {
     const { createServiceRoleClient } = await import("@/lib/supabase/service");
     const service = createServiceRoleClient();
+    const wanted = email.trim().toLowerCase();
     const { data: candidates } = await service
       .from("clients")
       .select("id, email")
-      .ilike("email", email.trim())
+      .ilike("email", wanted.replace(/[\\%_]/g, (c) => `\\${c}`))
       .is("auth_user_id", null)
       .limit(2);
 
     // Solo un abbinamento certo: esattamente una scheda con questa email.
-    const match = (candidates ?? []).filter(
-      (c) => c.email.trim().toLowerCase() === email.trim().toLowerCase(),
-    );
+    const match = (candidates ?? []).filter((c) => c.email.trim().toLowerCase() === wanted);
     if (match.length !== 1) return;
 
     const update: Record<string, unknown> = { auth_user_id: userId };
     if (metadata?.privacy_accepted === true || metadata?.privacy_accepted === "true") {
       update.privacy_accepted_at = new Date().toISOString();
+    }
+    // "Sì, sono già cliente": lo conferma il proprietario dell'email. Un "no"
+    // non toglie il segno messo dallo studio.
+    if (metadata?.is_existing_client === true || metadata?.is_existing_client === "true") {
+      update.is_existing_client = true;
     }
     const { error } = await service
       .from("clients")
@@ -116,26 +147,6 @@ async function linkExistingClientByEmail(
     if (error) console.error("linkExistingClientByEmail", error.message);
   } catch (err) {
     console.error("linkExistingClientByEmail", err);
-  }
-}
-
-async function clearSelfDeclaredExistingFlag(userId: string, metadata: Record<string, unknown>) {
-  try {
-    const { createServiceRoleClient } = await import("@/lib/supabase/service");
-    const service = createServiceRoleClient();
-    // Solo schede appena create dall'account stesso: un flag impostato dallo
-    // studio su una scheda esistente non va toccato.
-    await service
-      .from("clients")
-      .update({ is_existing_client: false })
-      .eq("auth_user_id", userId)
-      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-    // Togliamo la dichiarazione dai metadati, così non viene riletta.
-    await service.auth.admin.updateUserById(userId, {
-      user_metadata: { ...metadata, is_existing_client: null },
-    });
-  } catch (err) {
-    console.error("clearSelfDeclaredExistingFlag", err);
   }
 }
 

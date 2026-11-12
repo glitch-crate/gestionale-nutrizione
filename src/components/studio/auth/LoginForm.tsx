@@ -17,7 +17,7 @@ export function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("studio");
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,

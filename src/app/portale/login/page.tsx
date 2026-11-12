@@ -22,7 +22,8 @@ export default async function PortaleLoginPage({
       </>
     ) : errore === "account_non_cliente" ? (
       <>
-        Non è stato possibile collegare questo account a una scheda cliente. Contatta lo studio:{" "}
+        Non è stato possibile aprire il tuo profilo. Se sei già cliente dello studio, contattalo e
+        ti aiuterà ad accedere:{" "}
         <StudioContactLinks />
       </>
     ) : null;

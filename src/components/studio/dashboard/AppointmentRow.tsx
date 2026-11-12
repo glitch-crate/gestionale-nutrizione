@@ -2,6 +2,9 @@ import type { Appointment } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDayShort, formatTime } from "@/lib/format";
 
+// La riga si adatta allo spazio del riquadro che la contiene (container
+// query), non alla larghezza dello schermo: la stessa riga sta sia
+// nell'agenda larga sia nella colonna stretta "Prossimi appuntamenti".
 export function AppointmentRow({
   appointment,
   showDate = false,
@@ -10,22 +13,22 @@ export function AppointmentRow({
   showDate?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[var(--color-line)] py-3.5 last:border-none">
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="w-16 shrink-0 font-figures text-[15px] text-[var(--color-ink)]">
+    <div className="@container border-b border-[var(--color-line)] py-3 last:border-none">
+      <div className="flex items-start gap-3 @sm:items-center @sm:gap-4">
+        <div className="w-[4.5rem] shrink-0 whitespace-nowrap pt-px font-figures text-[15px] text-[var(--color-ink)]">
           {showDate ? formatDayShort(appointment.startsAt) : formatTime(appointment.startsAt)}
         </div>
-        <div className="min-w-0">
-          <p className="text-[15px] font-medium text-[var(--color-ink)]">
-            {appointment.clientName}
-          </p>
-          <p className="text-sm text-[var(--color-muted)]">
-            {appointment.appointmentTypeName}
-          </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 @sm:flex-row @sm:items-center @sm:justify-between @sm:gap-4">
+          <div className="min-w-0">
+            <p className="truncate text-[15px] font-medium text-[var(--color-ink)]">
+              {appointment.clientName}
+            </p>
+            <p className="truncate text-sm text-[var(--color-muted)]">{appointment.appointmentTypeName}</p>
+          </div>
+          <div className="shrink-0">
+            <StatusBadge status={appointment.status} />
+          </div>
         </div>
-      </div>
-      <div className="shrink-0">
-        <StatusBadge status={appointment.status} />
       </div>
     </div>
   );

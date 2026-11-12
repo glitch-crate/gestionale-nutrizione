@@ -35,14 +35,14 @@ export default async function ClienteDettaglioPage({
       </div>
 
       <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
-        <dl className="grid grid-cols-2 gap-4 text-[15px]">
+        <dl className="grid grid-cols-1 gap-4 text-[15px] sm:grid-cols-2">
           <div>
             <dt className="text-sm text-[var(--color-muted)]">Telefono</dt>
             <dd className="text-[var(--color-ink)]">{client.phone}</dd>
           </div>
           <div>
             <dt className="text-sm text-[var(--color-muted)]">Email</dt>
-            <dd className="text-[var(--color-ink)]">{client.email}</dd>
+            <dd className="break-all text-[var(--color-ink)]">{client.email}</dd>
           </div>
           <div>
             <dt className="text-sm text-[var(--color-muted)]">Cliente dal</dt>
@@ -51,9 +51,9 @@ export default async function ClienteDettaglioPage({
             </dd>
           </div>
           {client.notes ? (
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <dt className="text-sm text-[var(--color-muted)]">Note operative</dt>
-              <dd className="text-[var(--color-ink)]">{client.notes}</dd>
+              <dd className="whitespace-pre-line break-words text-[var(--color-ink)]">{client.notes}</dd>
             </div>
           ) : null}
         </dl>
@@ -63,7 +63,7 @@ export default async function ClienteDettaglioPage({
 
       <ExistingClientToggle clientId={client.id} initialValue={client.isExistingClient} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[15px] font-medium text-[var(--color-ink)]">Storico appuntamenti</h2>
         <Link
           href={`/appuntamenti/nuovo?clientId=${client.id}`}

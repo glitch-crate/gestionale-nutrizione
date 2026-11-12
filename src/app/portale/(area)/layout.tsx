@@ -34,7 +34,7 @@ export default async function PortaleAreaLayout({
   return (
     <div className="flex min-h-svh flex-col bg-[var(--color-canvas)]">
       <PortaleHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-[22px] py-6 sm:px-6 sm:py-8">{children}</main>
       <PortaleFooter />
     </div>
   );

@@ -18,11 +18,20 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  // Risposta a "Sei già cliente dello studio?": null finché non sceglie.
+  // Il database la legge da `is_existing_client` nei dati dell'account: chi è
+  // nuovo può prenotare solo il "Primo incontro", chi è già cliente "Controllo"
+  // o "Trattamento".
+  const [isExistingClient, setIsExistingClient] = useState<boolean | null>(null);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
 
+    if (isExistingClient === null) {
+      setError("Indica se sei già cliente dello studio.");
+      return;
+    }
 
     if (!privacyAccepted) {
       setError("Devi accettare l'informativa privacy per registrarti.");
@@ -31,7 +40,7 @@ export function RegisterForm() {
 
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -44,6 +53,7 @@ export function RegisterForm() {
           last_name: lastName,
           phone,
           privacy_accepted: true,
+          is_existing_client: isExistingClient,
         },
       },
     });
@@ -51,10 +61,17 @@ export function RegisterForm() {
     setLoading(false);
 
     if (signUpError) {
+      const message = signUpError.message.toLowerCase();
       setError(
-        signUpError.message.includes("already registered")
+        message.includes("already registered")
           ? "Esiste già un account con questa email."
-          : "Non è stato possibile creare l'account. Riprova.",
+          : message.includes("sending") && message.includes("email")
+            ? "Non riusciamo a inviarti l'email di conferma in questo momento. Riprova più tardi o contatta lo studio."
+            : message.includes("rate limit") || signUpError.status === 429
+              ? "Troppi tentativi in poco tempo. Aspetta qualche minuto e riprova."
+              : message.includes("password")
+                ? "La password non è accettata: usane una più lunga o meno comune."
+                : "Non è stato possibile creare l'account. Riprova.",
       );
       return;
     }
@@ -167,10 +184,34 @@ export function RegisterForm() {
         />
       </div>
 
-      <p className="rounded-lg bg-[var(--color-canvas)] px-3.5 py-2.5 text-sm text-[var(--color-muted)]">
-        Sei già cliente dello studio? Usa la stessa email che hai lasciato alla dottoressa: il tuo
-        profilo verrà riconosciuto in automatico dopo la conferma dell&apos;email.
-      </p>
+      <div className="flex flex-col gap-1.5">
+        <p id="gia-cliente" className="text-sm font-medium text-[var(--color-ink)]">
+          Sei già cliente dello studio?
+        </p>
+        <div role="group" aria-labelledby="gia-cliente" className="grid grid-cols-2 gap-2">
+          {[
+            { value: true, label: "Sì, sono già cliente" },
+            { value: false, label: "No, sono nuovo" },
+          ].map((option) => {
+            const selected = isExistingClient === option.value;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setIsExistingClient(option.value)}
+                className={`min-h-[44px] rounded-lg border px-3.5 py-2.5 text-[15px] font-medium transition-colors ${
+                  selected
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
+                    : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <label className="flex items-start gap-2.5 text-sm text-[var(--color-ink)]">
         <input

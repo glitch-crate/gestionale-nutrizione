@@ -39,7 +39,7 @@ export function AppointmentTypeRow({
   const changed = value !== durationMinutes;
 
   return (
-    <div className="flex items-center justify-between gap-3 text-[15px]">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[15px]">
       <span className="text-[var(--color-ink)]">{name}</span>
       <div className="flex items-center gap-2">
         <input
@@ -63,7 +63,7 @@ export function AppointmentTypeRow({
           <span className="text-sm text-[var(--color-status-confirmed)]">Salvato ✓</span>
         ) : null}
       </div>
-      {error ? <p className="text-sm text-[var(--color-status-cancelled)]">{error}</p> : null}
+      {error ? <p className="w-full text-sm text-[var(--color-status-cancelled)]">{error}</p> : null}
     </div>
   );
 }

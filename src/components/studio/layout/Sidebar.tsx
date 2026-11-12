@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { STUDIO } from "@/config/studio";
 import { fetchPendingRequestsCount } from "@/lib/browser/studio";
+import { REQUESTS_CHANGED_EVENT } from "@/components/studio/richieste/RequestActions";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -27,7 +28,7 @@ export function Sidebar({
   const pathname = usePathname();
   const [pendingRequests, setPendingRequests] = useState(0);
 
-  // Quante richieste di spostamento aspettano una risposta (si aggiorna da solo ogni minuto).
+  // Quante richieste di spostamento aspettano una risposta (si aggiorna da solo ogni minuto e dopo ogni risposta a una richiesta).
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -40,9 +41,12 @@ export function Sidebar({
     }
     load();
     const timer = setInterval(load, 60000);
+    // Subito dopo un "Approva"/"Rifiuta" nella pagina Richieste.
+    window.addEventListener(REQUESTS_CHANGED_EVENT, load);
     return () => {
       cancelled = true;
       clearInterval(timer);
+      window.removeEventListener(REQUESTS_CHANGED_EVENT, load);
     };
   }, [pathname]);
 
@@ -52,14 +56,15 @@ export function Sidebar({
       {open ? (
         <div
           onClick={onNavigate}
-          className="fixed inset-0 z-30 bg-black/40 sm:hidden"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
           aria-hidden="true"
         />
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col bg-[var(--color-pine)] px-4 py-6 transition-transform duration-200 sm:static sm:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
+        id="menu-studio"
+        className={`fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col bg-[var(--color-pine)] px-4 py-6 transition-[transform,visibility] duration-200 lg:visible lg:static lg:translate-x-0 ${
+          open ? "visible translate-x-0" : "invisible -translate-x-full"
         }`}
       >
         <div className="px-2 pb-8">

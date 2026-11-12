@@ -6,6 +6,9 @@ import { updateOpeningHoursAction } from "@/lib/actions/studio/impostazioni";
 import { WEEK_DAYS as DAYS } from "@/lib/format";
 import type { OpeningHours } from "@/types";
 
+const TIME_INPUT =
+  "min-h-[40px] rounded-md border border-[var(--color-line)] bg-[var(--color-canvas)] px-2 py-1.5 text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]";
+
 export function OpeningHoursForm({
   businessName,
   openingHours,
@@ -52,7 +55,7 @@ export function OpeningHoursForm({
           name="businessName"
           defaultValue={businessName}
           required
-          className="max-w-sm rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
+          className="w-full max-w-sm rounded-lg border border-[var(--color-line)] bg-[var(--color-canvas)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
         />
       </div>
 
@@ -62,7 +65,7 @@ export function OpeningHoursForm({
           const isClosed = closedDays[day.key];
 
           return (
-            <div key={day.key} className="flex flex-wrap items-center gap-3 border-b border-[var(--color-line)] pb-3 last:border-none">
+            <div key={day.key} className="flex flex-col gap-3 border-b border-[var(--color-line)] pb-3 last:border-none xl:flex-row xl:items-center">
               <div className="flex w-44 shrink-0 items-center justify-between gap-2">
                 <span className="text-[15px] font-medium text-[var(--color-ink)]">{day.label}</span>
                 <label className="flex items-center gap-1.5 text-sm text-[var(--color-muted)]">
@@ -80,34 +83,29 @@ export function OpeningHoursForm({
               </div>
 
               {!isClosed ? (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <input
-                    type="time"
-                    name={`start_${day.key}_1`}
-                    defaultValue={windows[0]?.start ?? ""}
-                    className="rounded-md border border-[var(--color-line)] bg-[var(--color-canvas)] px-2 py-1.5 text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
-                  />
-                  <span className="text-[var(--color-muted)]">–</span>
-                  <input
-                    type="time"
-                    name={`end_${day.key}_1`}
-                    defaultValue={windows[0]?.end ?? ""}
-                    className="rounded-md border border-[var(--color-line)] bg-[var(--color-canvas)] px-2 py-1.5 text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
-                  />
-                  <span className="mx-1 text-[var(--color-muted)]">e (opzionale)</span>
-                  <input
-                    type="time"
-                    name={`start_${day.key}_2`}
-                    defaultValue={windows[1]?.start ?? ""}
-                    className="rounded-md border border-[var(--color-line)] bg-[var(--color-canvas)] px-2 py-1.5 text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
-                  />
-                  <span className="text-[var(--color-muted)]">–</span>
-                  <input
-                    type="time"
-                    name={`end_${day.key}_2`}
-                    defaultValue={windows[1]?.end ?? ""}
-                    className="rounded-md border border-[var(--color-line)] bg-[var(--color-canvas)] px-2 py-1.5 text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
-                  />
+                <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+                  {[1, 2].map((slot) => (
+                    <div key={slot} className="flex flex-wrap items-center gap-2">
+                      <span className="w-full text-[var(--color-muted)] sm:w-auto">
+                        {slot === 1 ? "Fascia" : "2ª fascia (facoltativa)"}
+                      </span>
+                      <input
+                        type="time"
+                        name={`start_${day.key}_${slot}`}
+                        aria-label={`${day.label}, inizio ${slot === 1 ? "prima" : "seconda"} fascia`}
+                        defaultValue={windows[slot - 1]?.start ?? ""}
+                        className={TIME_INPUT}
+                      />
+                      <span className="text-[var(--color-muted)]">–</span>
+                      <input
+                        type="time"
+                        name={`end_${day.key}_${slot}`}
+                        aria-label={`${day.label}, fine ${slot === 1 ? "prima" : "seconda"} fascia`}
+                        defaultValue={windows[slot - 1]?.end ?? ""}
+                        className={TIME_INPUT}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : null}
             </div>

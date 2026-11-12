@@ -1,5 +1,6 @@
 import { RequestActions } from "@/components/studio/richieste/RequestActions";
 import { capitalize, formatDateTimeLong } from "@/lib/format";
+import { rescheduleDeadline } from "@/lib/timezone";
 import {
   getPendingRescheduleRequests,
   getRecentlyResolvedRescheduleRequests,
@@ -14,6 +15,7 @@ export default async function RichiestePage() {
     getPendingRescheduleRequests(),
     getRecentlyResolvedRescheduleRequests(10),
   ]);
+  const now = new Date().getTime();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -67,9 +69,16 @@ export default async function RichiestePage() {
                 </div>
               </div>
 
-              <p className="text-sm text-[var(--color-muted)]">
-                Orario riservato fino a {formatDateTime(req.expires_at)}.
-              </p>
+              {new Date(req.new_starts_at).getTime() <= now ? (
+                <p className="text-sm text-[var(--color-status-cancelled)]">
+                  Il nuovo orario richiesto è già passato: rifiuta la richiesta e contatta il cliente.
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--color-muted)]">
+                  Rispondi entro {formatDateTime(rescheduleDeadline(req.expires_at, req.new_starts_at))}: fino
+                  ad allora l&apos;orario resta riservato.
+                </p>
+              )}
 
               <RequestActions requestId={req.id} />
             </div>

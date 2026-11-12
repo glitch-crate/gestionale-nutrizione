@@ -49,7 +49,7 @@ export function ResetPasswordForm() {
 
     // Flusso alternativo (token già nel frammento #): qui Supabase lo
     // rileva da solo, non c'è un "codice" da scambiare esplicitamente.
-    const supabase = createClient();
+    const supabase = createClient("portale");
 
     const timeout = setTimeout(() => {
       setLinkError(
@@ -85,7 +85,7 @@ export function ResetPasswordForm() {
     setConfirming(true);
     setError(null);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(pendingCode);
 
     setConfirming(false);
@@ -105,7 +105,7 @@ export function ResetPasswordForm() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient("portale");
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     setLoading(false);

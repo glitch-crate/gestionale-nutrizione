@@ -95,10 +95,15 @@ I nomi delle variabili sono quelli di `src/app/globals.css`.
 - I pulsanti degli orari e quelli principali sono alti almeno 44px, per il tocco col dito.
 
 ## Layout
-- **Studio:** barra laterale pino fissa e contenuto su griglia. Su schermi stretti la barra si
-  chiude.
+- **Studio:** barra laterale pino fissa e contenuto su griglia. Sotto i 1024px (telefono e tablet)
+  la barra si chiude e si apre dal pulsante menu; si chiude anche con Esc.
 - **Portale:** una sola colonna, larghezza massima 480px. Su telefono l'azione principale sta in
-  basso, a portata di pollice.
+  basso, a portata di pollice. L'intestazione ha la stessa larghezza del contenuto; su telefono il
+  menu resta su una riga (se non ci sta scorre di lato) e la pagina attuale è sottolineata in
+  terracotta.
+- **Larghezze di riferimento:** telefono 320–430px, tablet 768px, laptop 1280–1440px, desktop
+  1920px. Nessuna pagina deve scorrere di lato. Le righe che stanno in riquadri di larghezza
+  diversa (per esempio gli appuntamenti della dashboard) si adattano al riquadro, non allo schermo.
 - **Allineamento:** a sinistra. Niente pagine tutte centrate.
 - **Angoli:**
   - 8px per pulsanti, campi e pulsanti degli orari (`rounded-lg`);
@@ -166,3 +171,4 @@ e dashboard) è stata generata durante la definizione del sistema e non fa parte
 | 11/11/2026 | Nuovi colori Salvia e Argilla | Fascia del portale e orario scelto, senza aggiungere un secondo accento. |
 | 11/11/2026 | Portale: solo orari liberi e biglietto di conferma | Calma invece di scarsità; il biglietto è il momento in cui il cliente si sente in buone mani. |
 | 11/11/2026 | Scartata la dashboard raccontata in una frase | Il professionista preferisce le card con i numeri in vista. |
+| 12/11/2026 | Barra laterale dello studio fissa solo da 1024px; menu del portale su una riga con pagina attuale evidenziata | Sul tablet la barra fissa lasciava al contenuto meno di 520px; sul telefono il menu del portale andava a capo. |

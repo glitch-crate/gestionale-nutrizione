@@ -36,9 +36,13 @@ struttura senza l'approvazione esplicita dell'utente. Differenze di cui il codic
   colonna `notes`);
 - `book_appointment`, `request_reschedule`, `cancel_reschedule_request` e
   `resolve_reschedule_request` restituiscono la riga intera, non un id o un jsonb;
-- `ensure_client_profile` non collega da sola un cliente già inserito dallo studio: lo fa
-  `ensureClientProfile()` in `src/lib/auth/session.ts`, con la chiave service role, solo se l'email
-  dell'account è verificata.
+- chi si registra entra subito nel portale con una scheda nuova (`ensure_client_profile`); la
+  risposta "Sei già cliente dello studio?" va nei metadati (`is_existing_client`): con "no" e senza
+  appuntamenti si può prenotare solo il "Primo incontro" (40 minuti);
+- chi era già stato inserito dallo studio con la stessa email viene collegato alla sua scheda da
+  `ensureClientProfile()` (`src/lib/auth/session.ts`) **solo se ha confermato l'email con il link**
+  (`emailProvedByLink`). Non togliere questo controllo: con la conferma dell'email disattivata in
+  Supabase chiunque potrebbe registrarsi con l'email di un altro e prendersi la sua scheda.
 Le regole qui sotto descrivono lo schema di `schema.sql`; dove il database di produzione è diverso,
 vale quanto scritto in questa sezione.
 

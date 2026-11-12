@@ -27,7 +27,7 @@ export default async function CalendarioPage({
   ]);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-display text-2xl text-[var(--color-ink)]">
           Calendario

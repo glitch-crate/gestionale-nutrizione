@@ -38,17 +38,17 @@ export default async function AppuntamentiPage() {
           {appointments.map((appointment) => (
             <div
               key={appointment.id}
-              className="flex flex-col gap-3 border-b border-[var(--color-line)] px-4 py-4 last:border-none sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+              className="flex flex-col gap-3 border-b border-[var(--color-line)] px-4 py-4 last:border-none md:flex-row md:items-center md:justify-between md:gap-4 sm:px-5"
             >
-              <div>
-                <p className="text-[15px] font-medium text-[var(--color-ink)]">
+              <div className="min-w-0">
+                <p className="truncate text-[15px] font-medium text-[var(--color-ink)]">
                   {appointment.clientName}
                 </p>
                 <p className="text-sm text-[var(--color-muted)]">
-                  {capitalize(formatDateTimeShort(appointment.startsAt))} ·{appointment.appointmentTypeName}
+                  {capitalize(formatDateTimeShort(appointment.startsAt))} · {appointment.appointmentTypeName}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
                 <StatusBadge status={appointment.status} />
                 <AppointmentActions
                   appointmentId={appointment.id}

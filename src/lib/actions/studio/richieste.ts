@@ -16,6 +16,23 @@ export async function resolveRescheduleAction(
   const supabase = await getProfessionalClient();
   if (!supabase) return { success: false, error: "Non autorizzato." };
 
+  // La funzione del database calcola la scadenza sull'appuntamento vecchio e
+  // non controlla che il nuovo orario sia ancora futuro: lo facciamo qui, così
+  // non si sposta mai un appuntamento in un orario già passato.
+  if (approve) {
+    const { data: request } = await supabase
+      .from("reschedule_requests")
+      .select("new_starts_at")
+      .eq("id", requestId)
+      .maybeSingle();
+    if (request && new Date(request.new_starts_at).getTime() <= Date.now()) {
+      return {
+        success: false,
+        error: "Il nuovo orario richiesto è già passato: non si può approvare. Rifiuta la richiesta e contatta il cliente.",
+      };
+    }
+  }
+
   const { data, error } = await supabase.rpc("resolve_reschedule_request", {
     p_request_id: requestId,
     p_approve: approve,
