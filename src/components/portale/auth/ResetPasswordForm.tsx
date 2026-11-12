@@ -26,20 +26,24 @@ export function ResetPasswordForm() {
     const searchParams = new URLSearchParams(window.location.search);
     const errorCode = hashParams.get("error_code") || searchParams.get("error_code");
 
+    // Gli aggiornamenti di stato partono in un microtask, non direttamente
+    // nel corpo dell'effetto (evita un secondo render a cascata).
     if (errorCode === "otp_expired") {
-      setLinkError(
-        "Questo link non è più valido: è scaduto oppure è già stato usato (a volte succede se l'app email lo apre in automatico per un controllo di sicurezza, prima che tu riesca a cliccarlo tu stesso).",
+      queueMicrotask(() =>
+        setLinkError(
+          "Questo link non è più valido: è scaduto oppure è già stato usato (a volte succede se l'app email lo apre in automatico per un controllo di sicurezza, prima che tu riesca a cliccarlo tu stesso).",
+        ),
       );
       return;
     }
     if (errorCode) {
-      setLinkError("Questo link non è valido. Richiedine uno nuovo dalla pagina di login.");
+      queueMicrotask(() => setLinkError("Questo link non è valido. Richiedine uno nuovo dalla pagina di login."));
       return;
     }
 
     const code = searchParams.get("code");
     if (code) {
-      setPendingCode(code);
+      queueMicrotask(() => setPendingCode(code));
       return;
     }
 

@@ -47,6 +47,41 @@ export async function createClientAction(formData: FormData): Promise<ActionResu
   return { success: true };
 }
 
+export async function updateClientAction(clientId: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await getProfessionalClient();
+  if (!supabase) return { success: false, error: "Non autorizzato." };
+
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!firstName || !lastName || !phone || !email) {
+    return { success: false, error: "Compila tutti i campi obbligatori." };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { success: false, error: "L'email non sembra valida." };
+  }
+
+  const { data: updated, error } = await supabase
+    .from("clients")
+    .update({ first_name: firstName, last_name: lastName, phone, email, notes: notes || null })
+    .eq("id", clientId)
+    .select("id");
+
+  if (error || !updated?.length) {
+    return {
+      success: false,
+      error: error?.code === "23505" ? "Esiste già un cliente con questa email." : "Errore durante il salvataggio.",
+    };
+  }
+
+  revalidatePath(`/clienti/${clientId}`);
+  revalidatePath("/clienti");
+  return { success: true };
+}
+
 export async function deleteClientAction(clientId: string): Promise<ActionResult> {
   const supabase = await getProfessionalClient();
   if (!supabase) return { success: false, error: "Non autorizzato." };

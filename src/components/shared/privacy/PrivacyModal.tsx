@@ -2,13 +2,17 @@
 
 import { PrivacyContent } from "@/components/shared/privacy/PrivacyContent";
 
-export function PrivacyModal({ onClose }: { onClose: () => void }) {
+// `onAccept`: il pulsante in fondo ("Ho letto…") vale come accettazione.
+export function PrivacyModal({ onClose, onAccept }: { onClose: () => void; onAccept?: () => void }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Informativa privacy"
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[85vh] w-full flex-col rounded-t-xl bg-[var(--color-surface)] sm:max-h-[80vh] sm:max-w-lg sm:rounded-xl"
       >
@@ -34,10 +38,10 @@ export function PrivacyModal({ onClose }: { onClose: () => void }) {
 
         <div className="shrink-0 border-t border-[var(--color-line)] p-4">
           <button
-            onClick={onClose}
+            onClick={onAccept ?? onClose}
             className="w-full rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-[15px] font-medium text-white hover:bg-[var(--color-accent-hover)]"
           >
-            Ho letto, continua la registrazione
+            {onAccept ? "Ho letto e accetto" : "Ho letto, continua la registrazione"}
           </button>
         </div>
       </div>

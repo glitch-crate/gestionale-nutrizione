@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatDateKey } from "@/lib/format";
-import { addDaysToKey, romeDateKey } from "@/lib/timezone";
+import { addDaysToKey, isoDow, romeDateKey } from "@/lib/timezone";
 
 export function CalendarNav({
   view,
@@ -26,12 +26,13 @@ export function CalendarNav({
   }
 
   const step = view === "giorno" ? 1 : 7;
-  const dateLabel = formatDateKey(currentDate, {
-    weekday: view === "giorno" ? "long" : undefined,
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  // Vista settimana: intervallo da lunedì a domenica (es. "9 – 15 novembre 2026").
+  const weekStart = addDaysToKey(currentDate, -(isoDow(currentDate) - 1));
+  const weekEnd = addDaysToKey(weekStart, 6);
+  const dateLabel =
+    view === "giorno"
+      ? formatDateKey(currentDate, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      : `${formatDateKey(weekStart, { day: "numeric", month: weekStart.slice(5, 7) === weekEnd.slice(5, 7) ? undefined : "long" })} – ${formatDateKey(weekEnd, { day: "numeric", month: "long", year: "numeric" })}`;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">

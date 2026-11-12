@@ -20,6 +20,7 @@ export interface Client {
   notes: string | null;
   createdAt: string;
   isExistingClient: boolean;
+  hasPortalAccount?: boolean;
 }
 
 export interface Appointment {

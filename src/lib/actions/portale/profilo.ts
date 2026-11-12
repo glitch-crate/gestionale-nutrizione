@@ -22,22 +22,25 @@ export async function updateMyProfileAction(formData: FormData): Promise<ActionR
   if (!firstName || !lastName || !phone) {
     return { success: false, error: "Compila tutti i campi." };
   }
-
-  // La funzione del database aggiorna SOLO questi tre campi: il cliente
-  // non ha accesso diretto alla tabella `clients`.
-  const { error } = await supabase.rpc("update_my_profile", {
-    p_first_name: firstName,
-    p_last_name: lastName,
-    p_phone: phone,
-  });
-
-  if (error) {
+  if (firstName.length > 100 || lastName.length > 100 || !/^[0-9 +().-]{5,30}$/.test(phone)) {
     return {
       success: false,
-      error: error.message.includes("non validi")
-        ? "Controlla i dati: il telefono può contenere solo numeri, spazi e + ( ) - ."
-        : "Errore durante il salvataggio.",
+      error: "Controlla i dati: il telefono può contenere solo numeri, spazi e + ( ) - .",
     };
+  }
+
+  // Il database di produzione non ha `update_my_profile`: si aggiorna la
+  // propria riga di `clients` tramite la policy RLS `clients_update_self`.
+  // Aggiorniamo SOLO questi tre campi.
+  const { data: updated, error } = await supabase
+    .from("clients")
+    .update({ first_name: firstName, last_name: lastName, phone })
+    .eq("auth_user_id", user.id)
+    .select("id");
+
+  if (error || !updated?.length) {
+    if (error) console.error("updateMyProfileAction", error.message);
+    return { success: false, error: "Errore durante il salvataggio." };
   }
 
   revalidatePath("/portale/profilo");

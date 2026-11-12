@@ -74,6 +74,39 @@ export function notifyStudioRescheduleRequest(p: {
   );
 }
 
+/** Appuntamento creato, spostato o annullato dallo studio: avviso al cliente. */
+export function notifyClientAppointmentChangedByStudio(p: {
+  to: string;
+  firstName: string;
+  kind: "creato" | "spostato" | "annullato";
+  startsAt: string;
+  oldStartsAt?: string;
+  typeName?: string;
+}) {
+  const type = p.typeName ? ` — ${p.typeName}` : "";
+  const subject =
+    p.kind === "creato"
+      ? `Nuovo appuntamento: ${when(p.startsAt)}`
+      : p.kind === "spostato"
+        ? `Appuntamento spostato: ${when(p.startsAt)}`
+        : `Appuntamento annullato: ${when(p.startsAt)}`;
+  const body =
+    p.kind === "creato"
+      ? `lo studio ha fissato per te un appuntamento:\n${when(p.startsAt)}${type}\n\n` +
+        `Lo trovi anche nella sezione "I miei appuntamenti" del portale.`
+      : p.kind === "spostato"
+        ? `lo studio ha spostato il tuo appuntamento` +
+          (p.oldStartsAt ? ` di ${when(p.oldStartsAt)}` : "") +
+          `.\nIl nuovo orario è:\n${when(p.startsAt)}${type}`
+        : `lo studio ha annullato il tuo appuntamento di ${when(p.startsAt)}${type}.\n\n` +
+          `Per fissarne un altro puoi prenotare dal portale o contattare lo studio.`;
+
+  return trySendEmail(
+    { to: p.to, subject, text: `Ciao ${p.firstName},\n\n${body}\n\n${SIGNATURE}` },
+    `appuntamento ${p.kind} dallo studio, avviso al cliente`,
+  );
+}
+
 export function notifyClientRescheduleOutcome(p: {
   to: string;
   firstName: string;

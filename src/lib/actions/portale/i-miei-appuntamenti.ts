@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { notifyStudioRescheduleRequest } from "@/lib/email/notifications";
+import { getMyAppointments } from "@/lib/queries/portale/appuntamenti";
+import { getMyClientProfile } from "@/lib/queries/portale/profilo";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/types";
 
@@ -26,10 +28,7 @@ export async function requestRescheduleAction(appointmentId: string, newStartsAt
   const supabase = await createClient();
 
   // Orario attuale, per l'avviso allo studio (letto prima della richiesta).
-  const [{ data: appointments }, { data: profiles }] = await Promise.all([
-    supabase.rpc("get_my_appointments"),
-    supabase.rpc("get_my_profile"),
-  ]);
+  const [appointments, profile] = await Promise.all([getMyAppointments(), getMyClientProfile()]);
 
   const { error } = await supabase.rpc("request_reschedule", {
     p_appointment_id: appointmentId,
@@ -40,15 +39,12 @@ export async function requestRescheduleAction(appointmentId: string, newStartsAt
     return { success: false, error: rescheduleErrorMessage(error.message) };
   }
 
-  const appointment = ((appointments ?? []) as { id: string; starts_at: string }[]).find(
-    (a) => a.id === appointmentId,
-  );
-  const profile = (profiles ?? [])[0] as { first_name: string; last_name: string; phone: string } | undefined;
+  const appointment = appointments.find((a) => a.id === appointmentId);
 
   if (appointment && profile) {
     after(() =>
       notifyStudioRescheduleRequest({
-        clientName: `${profile.first_name} ${profile.last_name}`,
+        clientName: `${profile.firstName} ${profile.lastName}`,
         clientPhone: profile.phone,
         oldStartsAt: appointment.starts_at,
         newStartsAt,

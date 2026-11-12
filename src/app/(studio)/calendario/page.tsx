@@ -48,7 +48,7 @@ export default async function CalendarioPage({
       {timeBlocks.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-[var(--color-line)]">
           {timeBlocks.map((block) => (
-            <TimeBlockRow key={block.id} block={block} />
+            <TimeBlockRow key={block.id} block={block} showDay={view === "settimana"} />
           ))}
         </div>
       ) : null}
@@ -56,7 +56,7 @@ export default async function CalendarioPage({
       {view === "giorno" ? (
         <DayView appointments={appointments} />
       ) : (
-        <WeekView weekStartKey={weekStartKey} appointments={appointments} />
+        <WeekView weekStartKey={weekStartKey} appointments={appointments} timeBlocks={timeBlocks} />
       )}
     </div>
   );

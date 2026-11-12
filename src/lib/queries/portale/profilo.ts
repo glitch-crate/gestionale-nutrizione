@@ -1,17 +1,31 @@
 // Letture del portale cliente: profilo dell'utente autenticato.
+//
+// Il database di produzione non ha la funzione `get_my_profile`: il cliente
+// legge la propria scheda direttamente da `clients`, dove la policy RLS
+// `clients_select_self` gli restituisce solo la riga collegata al suo account.
+// Il filtro su auth_user_id resta comunque esplicito.
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/session";
 
-export async function getMyClientProfile() {
-  const supabase = await createClient();
+export type MyClientProfile = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+};
 
-  // Il cliente non ha accesso diretto alla tabella `clients`: la funzione
-  // restituisce solo la sua scheda e solo i campi che può vedere.
-  const { data: rows } = await supabase.rpc("get_my_profile");
-  const data = (rows ?? [])[0] as
-    | { id: string; first_name: string; last_name: string; phone: string; email: string }
-    | undefined;
+export async function getMyClientProfile(): Promise<MyClientProfile | null> {
+  const { supabase, user } = await getCurrentUser();
+  if (!user) return null;
 
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, first_name, last_name, phone, email")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (error) console.error("getMyClientProfile", error.message);
   if (!data) return null;
 
   return {

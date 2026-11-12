@@ -32,8 +32,3 @@ export function fetchBookingLock() {
 export function fetchRescheduleSlots(params: { p_appointment_id: string; p_from: string; p_to: string }) {
   return createClient().rpc("get_reschedule_slots", params);
 }
-
-/** Crea la scheda cliente subito dopo la registrazione (se c'è già una sessione). */
-export function ensureClientProfile() {
-  return createClient().rpc("ensure_client_profile");
-}

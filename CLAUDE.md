@@ -26,6 +26,22 @@ Ogni funzionalità usa lo stesso nome ovunque. Per esempio `clienti`:
 Se l'utente chiede di installare, configurare o aggiornare il database Supabase, segui la skill
 `.claude/skills/installa-database/SKILL.md` (comando `/installa-database`).
 
+## Database di produzione (versione precedente dello schema)
+Il progetto Supabase in uso **non** va modificato: il codice è adattato allo schema che c'è già, che
+è una versione precedente di `supabase/schema.sql`. Non applicare `schema.sql` né altro SQL di
+struttura senza l'approvazione esplicita dell'utente. Differenze di cui il codice tiene conto:
+- mancano `get_my_profile`, `get_my_appointments` e `update_my_profile`: il portale legge e
+  aggiorna la propria scheda e i propri appuntamenti direttamente dalle tabelle, tramite le policy
+  RLS `clients_select_self`, `clients_update_self` e `appointments_select_own_client` (mai la
+  colonna `notes`);
+- `book_appointment`, `request_reschedule`, `cancel_reschedule_request` e
+  `resolve_reschedule_request` restituiscono la riga intera, non un id o un jsonb;
+- `ensure_client_profile` non collega da sola un cliente già inserito dallo studio: lo fa
+  `ensureClientProfile()` in `src/lib/auth/session.ts`, con la chiave service role, solo se l'email
+  dell'account è verificata.
+Le regole qui sotto descrivono lo schema di `schema.sql`; dove il database di produzione è diverso,
+vale quanto scritto in questa sezione.
+
 ## Regole di sicurezza del progetto
 - Lo schema del database è **solo** in `supabase/schema.sql`, che è idempotente. Ogni modifica al
   database si fa lì, in modo che si possa rieseguire su installazioni esistenti senza perdere dati.

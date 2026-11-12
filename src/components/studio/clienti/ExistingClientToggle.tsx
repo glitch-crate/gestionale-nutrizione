@@ -34,14 +34,15 @@ export function ExistingClientToggle({
           Cliente già seguito in studio
         </p>
         <p className="text-sm text-[var(--color-muted)]">
-          Se attivo, il portale gli propone direttamente lo slot da &quot;Controllo&quot; (20&apos;),
-          anche se non ha ancora nessun appuntamento registrato nel sistema.
+          Se attivo, nel portale può prenotare subito &quot;Controllo&quot; o &quot;Trattamento&quot;, anche
+          se non ha ancora nessun appuntamento registrato nel sistema.
         </p>
       </div>
       <button
         onClick={handleToggle}
         disabled={loading}
         aria-pressed={value}
+        aria-label="Cliente già seguito in studio"
         className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
           value ? "bg-[var(--color-accent)]" : "bg-[var(--color-line)]"
         }`}

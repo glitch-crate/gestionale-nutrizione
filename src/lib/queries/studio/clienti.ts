@@ -3,7 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Client } from "@/types";
 
-const CLIENT_SELECT = "id, studio_id, first_name, last_name, phone, email, notes, created_at, is_existing_client";
+const CLIENT_SELECT = "id, studio_id, first_name, last_name, phone, email, notes, created_at, is_existing_client, auth_user_id";
 
 type ClientRow = {
   id: string;
@@ -15,6 +15,7 @@ type ClientRow = {
   notes: string | null;
   created_at: string;
   is_existing_client: boolean;
+  auth_user_id: string | null;
 };
 
 function mapClient(c: ClientRow): Client {
@@ -28,6 +29,7 @@ function mapClient(c: ClientRow): Client {
     notes: c.notes,
     createdAt: c.created_at,
     isExistingClient: c.is_existing_client,
+    hasPortalAccount: Boolean(c.auth_user_id),
   };
 }
 
@@ -39,23 +41,45 @@ export async function getClientCount(): Promise<number> {
   return count ?? 0;
 }
 
+/** Testo senza accenti e in minuscolo, per confronti "morbidi". */
+function normalizeText(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+/** Solo le cifre, senza il prefisso internazionale italiano. */
+function phoneDigits(text: string): string {
+  return text.replace(/\D/g, "").replace(/^(0039|39)(?=3\d{8,9}$)/, "");
+}
+
+/**
+ * Elenco clienti, con ricerca facoltativa. La ricerca trova nome, cognome,
+ * "nome cognome" in qualsiasi ordine, email e telefono (ignorando spazi,
+ * trattini e +39). Lo studio ha poche centinaia di clienti al massimo, quindi
+ * il filtro si fa qui invece che con un filtro testuale nel database.
+ */
 export async function getClients(search?: string): Promise<Client[]> {
   const supabase = await createClient();
-  let query = supabase
-    .from("clients")
-    .select(CLIENT_SELECT)
-    .order("last_name", { ascending: true });
+  const { data } = await supabase.from("clients").select(CLIENT_SELECT);
 
-  if (search && search.trim()) {
-    const term = search.trim();
-    query = query.or(
-      `first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone.ilike.%${term}%`,
+  const clients = ((data ?? []) as ClientRow[])
+    .map(mapClient)
+    .sort(
+      (a, b) =>
+        normalizeText(a.lastName).localeCompare(normalizeText(b.lastName), "it") ||
+        normalizeText(a.firstName).localeCompare(normalizeText(b.firstName), "it"),
     );
-  }
 
-  const { data } = await query;
+  const term = normalizeText(search ?? "");
+  if (!term) return clients;
 
-  return ((data ?? []) as ClientRow[]).map(mapClient);
+  const words = term.split(/\s+/).filter(Boolean);
+  const digits = phoneDigits(term);
+
+  return clients.filter((c) => {
+    const text = normalizeText(`${c.firstName} ${c.lastName} ${c.email}`);
+    if (words.every((w) => text.includes(w))) return true;
+    return digits.length >= 3 && /^[\d\s+().-]+$/.test(term) && phoneDigits(c.phone).includes(digits);
+  });
 }
 
 /** Ultimi clienti aggiunti, dal più recente. */

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { createAppointmentAction, getAvailableSlotsAction } from "@/lib/actions/studio/appuntamenti";
 import { formatTime } from "@/lib/format";
 import { romeDateKey } from "@/lib/timezone";
@@ -30,29 +30,26 @@ export function NewAppointmentForm({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const selectedType = appointmentTypes.find((t) => t.id === appointmentTypeId);
-
-  useEffect(() => {
+  // Gli orari liberi si ricaricano quando cambiano tipo o data. Lo facciamo
+  // nei gestori degli eventi (non in un effetto), ignorando le risposte
+  // arrivate in ritardo per una scelta precedente.
+  const requestId = useRef(0);
+  function reloadSlots(typeId: string, day: string) {
     setSelectedSlot(null);
-    if (!appointmentTypeId || !date || !selectedType) {
+    const type = appointmentTypes.find((t) => t.id === typeId);
+    const current = ++requestId.current;
+    if (!typeId || !day || !type) {
       setSlots([]);
+      setLoadingSlots(false);
       return;
     }
-
-    let cancelled = false;
     setLoadingSlots(true);
-    getAvailableSlotsAction(date, selectedType.duration_minutes).then((result) => {
-      if (!cancelled) {
-        setSlots(result);
-        setLoadingSlots(false);
-      }
+    getAvailableSlotsAction(day, type.duration_minutes).then((result) => {
+      if (current !== requestId.current) return;
+      setSlots(result);
+      setLoadingSlots(false);
     });
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appointmentTypeId, date]);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -113,7 +110,10 @@ export function NewAppointmentForm({
           id="appointmentTypeId"
           required
           value={appointmentTypeId}
-          onChange={(e) => setAppointmentTypeId(e.target.value)}
+          onChange={(e) => {
+            setAppointmentTypeId(e.target.value);
+            reloadSlots(e.target.value, date);
+          }}
           className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
         >
           <option value="" disabled>
@@ -137,7 +137,10 @@ export function NewAppointmentForm({
           required
           value={date}
           min={romeDateKey()}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => {
+            setDate(e.target.value);
+            reloadSlots(appointmentTypeId, e.target.value);
+          }}
           className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5 py-2.5 text-[15px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
         />
       </div>

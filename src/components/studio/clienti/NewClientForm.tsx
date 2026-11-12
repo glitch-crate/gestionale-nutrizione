@@ -11,7 +11,11 @@ export function NewClientForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  // onSubmit (non `action`): in caso di errore i campi mantengono quello che
+  // è stato scritto, invece di essere azzerati da React.
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setLoading(true);
     setError(null);
     const result = await createClientAction(formData);
@@ -49,7 +53,7 @@ export function NewClientForm() {
           Annulla
         </button>
       </div>
-      <form ref={formRef} action={handleSubmit} className="grid grid-cols-2 gap-3">
+      <form ref={formRef} onSubmit={handleSubmit} className="grid grid-cols-2 gap-3">
         <input
           name="firstName"
           required

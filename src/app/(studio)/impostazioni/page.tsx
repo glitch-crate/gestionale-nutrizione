@@ -43,9 +43,10 @@ export default async function ImpostazioniPage() {
           ))}
         </div>
         <p className="mt-4 text-sm text-[var(--color-muted)]">
-          &quot;Primo incontro&quot; viene assegnato automaticamente al primo appuntamento di ogni
-          cliente; &quot;Controllo&quot; a tutti quelli successivi. La durata determina quanto durano gli
-          slot che il cliente vede nel portale.
+          Nel portale, un cliente nuovo può prenotare solo il &quot;Primo incontro&quot;; chi ha già
+          avuto un appuntamento (o è segnato come &quot;cliente già seguito&quot;) sceglie tra
+          &quot;Controllo&quot; e &quot;Trattamento&quot;. La durata determina quanto durano gli slot che il
+          cliente vede nel portale.
         </p>
       </div>
     </div>

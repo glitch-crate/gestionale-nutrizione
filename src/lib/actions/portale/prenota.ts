@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { notifyClientBookingConfirmed, notifyStudioNewBooking } from "@/lib/email/notifications";
+import { getMyAppointments } from "@/lib/queries/portale/appuntamenti";
+import { getMyClientProfile } from "@/lib/queries/portale/profilo";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/types";
 
@@ -25,7 +27,9 @@ function bookingErrorMessage(dbMessage: string): string {
 export async function bookAppointmentAction(startsAt: string, typeName: string | null): Promise<ActionResult> {
   const supabase = await createClient();
 
-  const { data: appointmentId, error } = await supabase.rpc("book_appointment", {
+  // Nel database di produzione `book_appointment` restituisce la riga
+  // dell'appuntamento creato (non solo l'id).
+  const { data: created, error } = await supabase.rpc("book_appointment", {
     p_starts_at: startsAt,
     p_type_name: typeName,
   });
@@ -35,33 +39,30 @@ export async function bookAppointmentAction(startsAt: string, typeName: string |
   }
 
   // Dati per le email: profilo del cliente e appuntamento appena creato.
-  const [{ data: profiles }, { data: appointments }] = await Promise.all([
-    supabase.rpc("get_my_profile"),
-    supabase.rpc("get_my_appointments"),
-  ]);
-  const profile = (profiles ?? [])[0] as
-    | { first_name: string; last_name: string; phone: string; email: string }
+  const row = (Array.isArray(created) ? created[0] : created) as
+    | { id: string; starts_at: string }
+    | null
     | undefined;
-  const appointment = ((appointments ?? []) as { id: string; starts_at: string; appointment_type_name: string }[]).find(
-    (a) => a.id === appointmentId,
-  );
+  const [profile, appointments] = await Promise.all([getMyClientProfile(), getMyAppointments()]);
+  const appointment = row ? appointments.find((a) => a.id === row.id) : undefined;
 
   // Le email partono dopo la risposta: il cliente non aspetta e un invio
   // fallito non annulla la prenotazione.
   if (profile && appointment) {
+    const typeLabel = appointment.appointment_type_name ?? typeName ?? "Appuntamento";
     after(async () => {
       await Promise.all([
         notifyClientBookingConfirmed({
           to: profile.email,
-          firstName: profile.first_name,
+          firstName: profile.firstName,
           startsAt: appointment.starts_at,
-          typeName: appointment.appointment_type_name,
+          typeName: typeLabel,
         }),
         notifyStudioNewBooking({
-          clientName: `${profile.first_name} ${profile.last_name}`,
+          clientName: `${profile.firstName} ${profile.lastName}`,
           clientPhone: profile.phone,
           startsAt: appointment.starts_at,
-          typeName: appointment.appointment_type_name,
+          typeName: typeLabel,
         }),
       ]);
     });

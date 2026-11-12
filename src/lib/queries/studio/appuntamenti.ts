@@ -1,6 +1,14 @@
 // Letture per l'agenda dello studio: appuntamenti, tipi di visita, orari liberi.
 import "server-only";
-import { addDaysToKey, romeDateKey, romeDayStart, romeDayEnd, isoDow as isoDowOf, computeFreeSlots } from "@/lib/timezone";
+import {
+  addDaysToKey,
+  romeDateKey,
+  romeDayStart,
+  romeDayEnd,
+  isoDow as isoDowOf,
+  computeFreeSlots,
+  toRomeInputValue,
+} from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import type { Appointment, AppointmentStatus, OpeningHours } from "@/types";
 
@@ -121,6 +129,50 @@ export async function getActiveAppointmentTypes() {
   return data ?? [];
 }
 
+/**
+ * Controlla se un appuntamento può stare in [start, end): non nel passato,
+ * dentro l'orario di apertura e fuori dai blocchi dell'agenda. Restituisce il
+ * messaggio da mostrare, oppure null se va bene. La sovrapposizione con altri
+ * appuntamenti la impedisce già il database.
+ */
+export async function checkAppointmentSlot(start: Date, end: Date): Promise<string | null> {
+  if (start.getTime() < Date.now()) {
+    return "Non puoi fissare un appuntamento in un orario già passato.";
+  }
+
+  const dateKey = romeDateKey(start);
+  if (romeDateKey(new Date(end.getTime() - 1)) !== dateKey) {
+    return "L'appuntamento deve iniziare e finire nello stesso giorno.";
+  }
+
+  const supabase = await createClient();
+  const [{ data: settings }, { data: blocks }] = await Promise.all([
+    supabase.from("studio_settings").select("opening_hours").maybeSingle(),
+    supabase
+      .from("time_blocks")
+      .select("id")
+      .lt("starts_at", end.toISOString())
+      .gt("ends_at", start.toISOString())
+      .limit(1),
+  ]);
+
+  if (blocks && blocks.length > 0) {
+    return "Questo orario cade in un blocco della tua agenda. Rimuovi il blocco o scegli un altro orario.";
+  }
+
+  const windows = ((settings?.opening_hours as OpeningHours | undefined) ?? {})[String(isoDowOf(dateKey))] ?? [];
+  const startHm = toRomeInputValue(start.toISOString()).slice(11, 16);
+  const endHm = toRomeInputValue(end.toISOString()).slice(11, 16);
+  const inside = windows.some((w) => w.start <= startHm && endHm <= w.end);
+  if (!inside) {
+    return windows.length === 0
+      ? "Lo studio è chiuso in questo giorno (vedi Impostazioni)."
+      : "Questo orario è fuori dall'orario di apertura dello studio (vedi Impostazioni).";
+  }
+
+  return null;
+}
+
 // Calcola gli orari liberi per il professionista in una data specifica,
 // data la durata del tipo di appuntamento scelto. Usata dal form "Nuovo
 // appuntamento" per mostrare pulsanti invece di una casella di testo
@@ -139,17 +191,19 @@ export async function getAvailableSlotsForDate(
   // Le tre letture sono indipendenti: partono insieme.
   const [{ data: settings }, { data: dayAppointments }, { data: dayBlocks }] = await Promise.all([
     supabase.from("studio_settings").select("opening_hours").maybeSingle(),
+    // Tutto ciò che si sovrappone al giorno, anche se è iniziato prima
+    // (per esempio un blocco di più giorni).
     supabase
       .from("appointments")
       .select("starts_at, ends_at")
-      .gte("starts_at", dayStart)
-      .lte("starts_at", dayEnd)
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart)
       .neq("status", "annullato"),
     supabase
       .from("time_blocks")
       .select("starts_at, ends_at")
-      .gte("starts_at", dayStart)
-      .lte("starts_at", dayEnd),
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart),
   ]);
 
   if (!settings) return [];

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PrivacyModal } from "@/components/shared/privacy/PrivacyModal";
 import { PasswordField } from "@/components/shared/PasswordField";
 import { useRouter } from "next/navigation";
-import { ensureClientProfile } from "@/lib/browser/portale";
 import { createClient } from "@/lib/supabase/client";
 
 export function RegisterForm() {
@@ -60,6 +59,13 @@ export function RegisterForm() {
       return;
     }
 
+    // Con la conferma email attiva, Supabase non restituisce errore per
+    // un'email già registrata: lo riconosciamo dall'elenco identità vuoto.
+    if (data.user && data.user.identities?.length === 0) {
+      setError("Esiste già un account con questa email. Accedi oppure usa \"Password dimenticata?\".");
+      return;
+    }
+
     // Se la conferma email è richiesta, non c'è ancora una sessione
     // attiva: il profilo cliente verrà creato automaticamente al primo
     // accesso, dopo che avrà cliccato il link ricevuto via email.
@@ -68,12 +74,8 @@ export function RegisterForm() {
       return;
     }
 
-    const { error: rpcError } = await ensureClientProfile();
-    if (rpcError) {
-      setError("Account creato, ma non è stato possibile completare la registrazione. Contatta lo studio.");
-      return;
-    }
-
+    // La scheda cliente viene creata (o collegata a quella già inserita dallo
+    // studio) dal server, al caricamento dell'area riservata.
     router.replace("/portale/prenota");
     router.refresh();
   }
@@ -191,7 +193,13 @@ export function RegisterForm() {
       </label>
 
       {showPrivacyModal ? (
-        <PrivacyModal onClose={() => setShowPrivacyModal(false)} />
+        <PrivacyModal
+          onClose={() => setShowPrivacyModal(false)}
+          onAccept={() => {
+            setPrivacyAccepted(true);
+            setShowPrivacyModal(false);
+          }}
+        />
       ) : null}
 
       {error ? (

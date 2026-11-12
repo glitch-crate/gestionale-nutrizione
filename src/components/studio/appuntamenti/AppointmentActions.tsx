@@ -21,6 +21,10 @@ export function AppointmentActions({
   const router = useRouter();
   const [rescheduling, setRescheduling] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [confirmingComplete, setConfirmingComplete] = useState(false);
+  // "Completa" ha senso solo da quando l'appuntamento è iniziato.
+  const [now] = useState(() => Date.now());
+  const hasStarted = new Date(startsAt).getTime() <= now;
   const [newTime, setNewTime] = useState(toRomeInputValue(startsAt));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +83,35 @@ export function AppointmentActions({
     );
   }
 
+  // Anche "Completa" chiude l'appuntamento in modo definitivo: chiediamo conferma.
+  if (confirmingComplete) {
+    return (
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+          <span className="text-sm text-[var(--color-ink)]">Segnare come completato?</span>
+          <button
+            onClick={async () => {
+              await handleStatusChange("completato");
+              setConfirmingComplete(false);
+            }}
+            disabled={loading}
+            className="rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-60"
+          >
+            {loading ? "Salvo…" : "Sì, completato"}
+          </button>
+          <button
+            onClick={() => setConfirmingComplete(false)}
+            disabled={loading}
+            className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+          >
+            No
+          </button>
+        </div>
+        {error ? <p className="text-sm text-[var(--color-status-cancelled)]">{error}</p> : null}
+      </div>
+    );
+  }
+
   // Annullare non si può disfare dall'interfaccia: chiediamo conferma.
   if (confirmingCancel) {
     return (
@@ -128,13 +161,15 @@ export function AppointmentActions({
             >
               Sposta
             </button>
-            <button
-              onClick={() => handleStatusChange("completato")}
-              disabled={loading}
-              className="text-sm font-medium text-[var(--color-muted)] hover:underline disabled:opacity-60"
-            >
-              Completa
-            </button>
+            {hasStarted ? (
+              <button
+                onClick={() => setConfirmingComplete(true)}
+                disabled={loading}
+                className="text-sm font-medium text-[var(--color-muted)] hover:underline disabled:opacity-60"
+              >
+                Completa
+              </button>
+            ) : null}
             <button
               onClick={() => setConfirmingCancel(true)}
               disabled={loading}

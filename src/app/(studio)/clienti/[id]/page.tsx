@@ -5,6 +5,7 @@ import { getClientById } from "@/lib/queries/studio/clienti";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ExistingClientToggle } from "@/components/studio/clienti/ExistingClientToggle";
 import { DeleteClientButton } from "@/components/studio/clienti/DeleteClientButton";
+import { EditClientForm } from "@/components/studio/clienti/EditClientForm";
 import { formatDate, formatDateTimeShort } from "@/lib/format";
 
 export default async function ClienteDettaglioPage({
@@ -57,6 +58,8 @@ export default async function ClienteDettaglioPage({
           ) : null}
         </dl>
       </div>
+
+      <EditClientForm client={client} hasPortalAccount={Boolean(client.hasPortalAccount)} />
 
       <ExistingClientToggle clientId={client.id} initialValue={client.isExistingClient} />
 

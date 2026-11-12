@@ -36,6 +36,12 @@ export async function updateOpeningHoursAction(formData: FormData): Promise<Acti
     for (const slot of ["1", "2"]) {
       const start = String(formData.get(`start_${day}_${slot}`) ?? "").trim();
       const end = String(formData.get(`end_${day}_${slot}`) ?? "").trim();
+      if ((start && !end) || (!start && end)) {
+        return {
+          success: false,
+          error: `Orario incompleto per ${label.toLowerCase()}: indica sia l'inizio sia la fine della fascia.`,
+        };
+      }
       if (start && end) {
         if (start >= end) {
           return {
@@ -45,6 +51,19 @@ export async function updateOpeningHoursAction(formData: FormData): Promise<Acti
         }
         windows.push({ start, end });
       }
+    }
+    windows.sort((a, b) => a.start.localeCompare(b.start));
+    if (windows.length === 2 && windows[1].start < windows[0].end) {
+      return {
+        success: false,
+        error: `Le due fasce di ${label.toLowerCase()} si sovrappongono: la seconda deve iniziare dopo la fine della prima.`,
+      };
+    }
+    if (windows.length === 0) {
+      return {
+        success: false,
+        error: `Per ${label.toLowerCase()} indica almeno una fascia oraria, oppure segna il giorno come chiuso.`,
+      };
     }
     openingHours[day] = windows;
   }
