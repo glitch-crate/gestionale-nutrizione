@@ -6,6 +6,44 @@ import { PasswordField } from "@/components/shared/PasswordField";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Traduce gli errori di Supabase Auth in messaggi per il cliente. I problemi
+// di invio dell'email (servizio email predefinito di Supabase, che consegna
+// solo agli indirizzi del team e pochissime email all'ora) sono i più comuni:
+// si risolvono configurando un SMTP vero in Supabase > Authentication > Emails.
+const EMAIL_SEND_PROBLEM =
+  "Non riusciamo a inviarti l'email di conferma in questo momento. Riprova più tardi o contatta lo studio.";
+
+function signUpErrorMessage(error: { code?: string; status?: number; message: string }): string {
+  const code = error.code ?? "";
+  const message = error.message.toLowerCase();
+
+  if (code === "user_already_exists" || code === "email_exists" || message.includes("already registered")) {
+    return "Esiste già un account con questa email.";
+  }
+  if (code === "email_address_invalid" || (message.includes("email") && message.includes("invalid"))) {
+    return "Questo indirizzo email non è valido. Controlla di averlo scritto bene.";
+  }
+  if (code === "weak_password" || message.includes("password")) {
+    return "La password non è accettata: usane una più lunga o meno comune.";
+  }
+  if (code === "over_email_send_rate_limit") {
+    return "Abbiamo inviato troppe email di conferma in poco tempo. Riprova tra un'ora o contatta lo studio.";
+  }
+  if (code === "over_request_rate_limit" || error.status === 429 || message.includes("rate limit")) {
+    return "Troppi tentativi in poco tempo. Aspetta qualche minuto e riprova.";
+  }
+  if (
+    code === "email_address_not_authorized" ||
+    message.includes("not authorized") ||
+    message.includes("sending") ||
+    message.includes("smtp") ||
+    error.status === 500
+  ) {
+    return EMAIL_SEND_PROBLEM;
+  }
+  return "Non è stato possibile creare l'account. Riprova.";
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -61,18 +99,10 @@ export function RegisterForm() {
     setLoading(false);
 
     if (signUpError) {
-      const message = signUpError.message.toLowerCase();
-      setError(
-        message.includes("already registered")
-          ? "Esiste già un account con questa email."
-          : message.includes("sending") && message.includes("email")
-            ? "Non riusciamo a inviarti l'email di conferma in questo momento. Riprova più tardi o contatta lo studio."
-            : message.includes("rate limit") || signUpError.status === 429
-              ? "Troppi tentativi in poco tempo. Aspetta qualche minuto e riprova."
-              : message.includes("password")
-                ? "La password non è accettata: usane una più lunga o meno comune."
-                : "Non è stato possibile creare l'account. Riprova.",
-      );
+      // Il codice e il messaggio originali restano nella console del browser,
+      // così si capisce subito la causa vera (spesso l'invio dell'email).
+      console.error("signUp", signUpError.code, signUpError.status, signUpError.message);
+      setError(signUpErrorMessage(signUpError));
       return;
     }
 
