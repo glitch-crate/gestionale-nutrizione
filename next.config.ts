@@ -31,6 +31,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Solo in sviluppo (npm run dev): permette di aprire il sito da un telefono
+  // sulla stessa rete Wi-Fi o collegato con l'hotspot via cavo, usando
+  // l'indirizzo del Mac (es. http://192.168.1.182:3000). Senza, Next.js blocca
+  // gli script della pagina richiesti da un altro dispositivo.
+  allowedDevOrigins: ["192.168.*.*", "172.20.10.*", "10.*.*.*", "*.local"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

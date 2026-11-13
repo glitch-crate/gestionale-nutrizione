@@ -76,7 +76,7 @@ export async function ensureClientProfile() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user?.email && emailProvedByLink(user)) {
+  if (user?.email && (await emailProvedByLink(user))) {
     await linkExistingClientByEmail(user.id, user.email, user.user_metadata);
   }
 
@@ -92,21 +92,58 @@ export async function ensureClientProfile() {
 
 /**
  * L'email è stata confermata davvero, con il link ricevuto alla registrazione?
- * - `confirmation_sent_at`: l'email di conferma è partita (con la conferma
- *   automatica non parte nulla);
- * - `email_confirmed_at` è successiva all'invio;
- * - l'email non è mai stata cambiata dopo la registrazione (un cambio email
- *   con la conferma automatica non darebbe nessuna prova).
+ *
+ * Supabase, dopo la conferma, svuota la data di invio dell'email
+ * (`confirmation_sent_at`), quindi non si può usare quella. Si controlla:
+ * - che il progetto richieda ora la conferma dell'email (`mailer_autoconfirm`
+ *   spento): con la conferma automatica nessuna email prova niente;
+ * - che la conferma sia arrivata almeno qualche secondo dopo la registrazione:
+ *   con la conferma automatica i due istanti coincidono (pochi millisecondi),
+ *   quindi gli account creati quando la conferma era spenta non si collegano;
+ * - che l'email non sia mai stata cambiata o in corso di cambio, e che
+ *   coincida con quella dell'identità email con cui l'account è nato.
  */
-function emailProvedByLink(user: {
+async function emailProvedByLink(user: {
+  email?: string;
+  created_at?: string;
   email_confirmed_at?: string;
-  confirmation_sent_at?: string;
   email_change_sent_at?: string;
   new_email?: string;
-}): boolean {
-  if (!user.email_confirmed_at || !user.confirmation_sent_at) return false;
+  identities?: { provider: string; identity_data?: Record<string, unknown> }[];
+}): Promise<boolean> {
+  if (!user.email || !user.created_at || !user.email_confirmed_at) return false;
   if (user.email_change_sent_at || user.new_email) return false;
-  return new Date(user.email_confirmed_at).getTime() >= new Date(user.confirmation_sent_at).getTime();
+
+  const confirmedAfterMs =
+    new Date(user.email_confirmed_at).getTime() - new Date(user.created_at).getTime();
+  if (confirmedAfterMs < 3000) return false;
+
+  const email = user.email.trim().toLowerCase();
+  const emailIdentity = (user.identities ?? []).find((i) => i.provider === "email");
+  const identityEmail = String(emailIdentity?.identity_data?.email ?? "").trim().toLowerCase();
+  if (identityEmail !== email) return false;
+
+  return confirmationRequired();
+}
+
+// Impostazione pubblica di Supabase Auth, letta al massimo ogni 5 minuti.
+let confirmationCache: { value: boolean; at: number } | null = null;
+async function confirmationRequired(): Promise<boolean> {
+  if (confirmationCache && Date.now() - confirmationCache.at < 5 * 60 * 1000) {
+    return confirmationCache.value;
+  }
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
+      cache: "no-store",
+    });
+    const settings = (await res.json()) as { mailer_autoconfirm?: boolean };
+    const value = res.ok && settings.mailer_autoconfirm === false;
+    confirmationCache = { value, at: Date.now() };
+    return value;
+  } catch {
+    return false;
+  }
 }
 
 /** Collega l'account all'unica scheda dello studio con la stessa email ancora senza account. */
