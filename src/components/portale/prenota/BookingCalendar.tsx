@@ -10,12 +10,13 @@ import {
   type SlotRow,
 } from "@/lib/browser/portale";
 import { capitalize, formatDateKey, formatDayLong, formatTime } from "@/lib/format";
-import { addDaysToKey, romeDateKey } from "@/lib/timezone";
+import { addDaysToKey, daysUntilMonthsLater, romeDateKey } from "@/lib/timezone";
 import type { AvailableSlot } from "@/types";
 import { BookingTicket } from "./BookingTicket";
 
-// Quanto in anticipo i clienti possono prenotare (circa due mesi).
-const BOOKING_WINDOW_DAYS = 60;
+// Quanto in anticipo i clienti possono prenotare: 3 mesi da oggi (es. dal 15
+// novembre al 15 febbraio compreso).
+const BOOKING_WINDOW_MONTHS = 3;
 // Il database restituisce al massimo 1000 righe per richiesta: scarichiamo
 // gli orari a blocchi di 15 giorni per non perdere gli ultimi giorni.
 const CHUNK_DAYS = 15;
@@ -59,6 +60,7 @@ export function BookingCalendar() {
     setSelectedSlot(null);
 
     const today = romeDateKey();
+    const windowDays = daysUntilMonthsLater(today, BOOKING_WINDOW_MONTHS);
 
     // Ogni blocco viene ritentato una volta se fallisce (rete o sessione
     // momentaneamente non disponibili) prima di considerarlo un errore.
@@ -66,7 +68,7 @@ export function BookingCalendar() {
       const params = {
         p_type_name: typeName,
         p_from: addDaysToKey(today, offset),
-        p_to: addDaysToKey(today, Math.min(offset + CHUNK_DAYS - 1, BOOKING_WINDOW_DAYS)),
+        p_to: addDaysToKey(today, Math.min(offset + CHUNK_DAYS - 1, windowDays)),
       };
       let result = await fetchAvailableSlots(params);
       if (result.error) {
@@ -78,7 +80,7 @@ export function BookingCalendar() {
     }
 
     const offsets: number[] = [];
-    for (let offset = 0; offset <= BOOKING_WINDOW_DAYS; offset += CHUNK_DAYS) offsets.push(offset);
+    for (let offset = 0; offset <= windowDays; offset += CHUNK_DAYS) offsets.push(offset);
     const results = await Promise.all(offsets.map(fetchChunk));
 
     setLoading(false);
@@ -266,7 +268,7 @@ export function BookingCalendar() {
   } else if (days.length === 0) {
     body = error ? null : (
       <p className="text-[16px] text-[var(--color-muted)]">
-        Nei prossimi due mesi non ci sono orari liberi. Contatta lo studio: troveremo una soluzione
+        Nei prossimi tre mesi non ci sono orari liberi. Contatta lo studio: troveremo una soluzione
         insieme.
       </p>
     );
@@ -278,27 +280,44 @@ export function BookingCalendar() {
           aria-label="Giorni con orari liberi"
           className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
         >
-          {days.map((day) => {
+          {days.map((day, index) => {
             const active = day === selectedDay;
+            // Sopra il primo giorno di ogni mese compare il nome del mese, e
+            // una linea sottile separa i mesi: si vede quando si passa, per
+            // esempio, da novembre a dicembre.
+            const newMonth = index === 0 || days[index - 1].slice(0, 7) !== day.slice(0, 7);
             return (
-              <button
+              <div
                 key={day}
-                role="tab"
-                aria-selected={active}
-                onClick={() => handleDayChange(day)}
-                className={`flex min-h-[60px] min-w-[56px] shrink-0 flex-col items-center justify-center rounded-lg border bg-[var(--color-surface)] px-3 py-2 transition-colors ${
-                  active
-                    ? "border-[var(--color-ink)]"
-                    : "border-[var(--color-line)] hover:border-[var(--color-muted)]"
+                className={`flex shrink-0 flex-col gap-1 ${
+                  newMonth && index > 0 ? "ml-1 border-l border-[var(--color-line)] pl-3" : ""
                 }`}
               >
-                <span className="text-[13px] text-[var(--color-muted)]">
-                  {capitalize(formatDateKey(day, { weekday: "short" }).replace(".", ""))}
+                <span
+                  aria-hidden="true"
+                  className="h-[18px] whitespace-nowrap text-[13px] font-semibold text-[var(--color-ink)]"
+                >
+                  {newMonth ? capitalize(formatDateKey(day, { month: "long" })) : ""}
                 </span>
-                <span className="font-figures text-[19px] font-bold text-[var(--color-ink)]">
-                  {formatDateKey(day, { day: "numeric" })}
-                </span>
-              </button>
+                <button
+                  role="tab"
+                  aria-selected={active}
+                  aria-label={capitalize(formatDateKey(day, { weekday: "long", day: "numeric", month: "long" }))}
+                  onClick={() => handleDayChange(day)}
+                  className={`flex min-h-[60px] min-w-[56px] flex-col items-center justify-center rounded-lg border bg-[var(--color-surface)] px-3 py-2 transition-colors ${
+                    active
+                      ? "border-[var(--color-ink)]"
+                      : "border-[var(--color-line)] hover:border-[var(--color-muted)]"
+                  }`}
+                >
+                  <span className="text-[13px] text-[var(--color-muted)]">
+                    {capitalize(formatDateKey(day, { weekday: "short" }).replace(".", ""))}
+                  </span>
+                  <span className="font-figures text-[19px] font-bold text-[var(--color-ink)]">
+                    {formatDateKey(day, { day: "numeric" })}
+                  </span>
+                </button>
+              </div>
             );
           })}
         </div>

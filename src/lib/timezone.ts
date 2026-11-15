@@ -45,6 +45,19 @@ export function addDaysToKey(key: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Quanti giorni ci sono da una chiave YYYY-MM-DD allo stesso giorno di
+ * `months` mesi dopo (es. dal 15 novembre al 15 febbraio). Se quel giorno non
+ * esiste (31 → febbraio) si prende l'ultimo giorno del mese.
+ */
+export function daysUntilMonthsLater(key: string, months: number): number {
+  const [y, m, d] = key.split("-").map(Number);
+  const targetMonthIndex = m - 1 + months;
+  const lastDay = new Date(Date.UTC(y, targetMonthIndex + 1, 0)).getUTCDate();
+  const target = Date.UTC(y, targetMonthIndex, Math.min(d, lastDay));
+  return Math.round((target - Date.UTC(y, m - 1, d)) / 86_400_000);
+}
+
 /** Giorno della settimana ISO (1=lun ... 7=dom) di una chiave YYYY-MM-DD. */
 export function isoDow(key: string): number {
   const dow = new Date(`${key}T12:00:00.000Z`).getUTCDay();

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseRomeLocalDateTime, parseInstant, toRomeInputValue, romeDateKey,
-  romeDayStart, romeDayEnd, addDaysToKey, isoDow, computeFreeSlots,
+  romeDayStart, romeDayEnd, addDaysToKey, isoDow, computeFreeSlots, daysUntilMonthsLater,
 } from "../src/lib/timezone.ts";
 
 const fmt = (iso: string) =>
@@ -84,4 +84,12 @@ test("disponibilità: trattamento da 60 min su griglia da 20, senza sovrapposizi
     busy: [{ starts_at: "2026-11-03T09:00:00Z", ends_at: "2026-11-03T09:20:00Z" }], nowMs: 0,
   });
   assert.deepEqual(withBusy.map(fmt), ["09:00", "10:20", "10:40", "11:00"]);
+});
+
+test("finestra di prenotazione: 3 mesi da oggi, fino allo stesso giorno o all'ultimo del mese", () => {
+  const end = (key: string) => addDaysToKey(key, daysUntilMonthsLater(key, 3));
+  assert.equal(end("2026-11-15"), "2027-02-15");
+  assert.equal(end("2026-11-30"), "2027-02-28");
+  assert.equal(end("2026-12-31"), "2027-03-31");
+  assert.equal(end("2027-11-30"), "2028-02-29"); // anno bisestile
 });
