@@ -136,6 +136,42 @@ export function BookingCalendar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Il blocco finisce quando inizia la visita (es. alle 14:00, non alle 14:20
+  // a visita finita): così il cliente può prenotare il prossimo appuntamento
+  // mentre è in studio. La pagina potrebbe essere stata aperta prima: allo
+  // scoccare dell'orario, e ogni volta che la pagina torna in primo piano,
+  // si richiede al database se il blocco c'è ancora.
+  useEffect(() => {
+    if (!lock || confirmed) return;
+
+    async function recheckLock() {
+      const { data, error: lockError } = await fetchBookingLock();
+      if (lockError) return;
+      const row = (data ?? [])[0] as { lock_starts_at: string } | undefined;
+      if (row) {
+        if (row.lock_starts_at !== lock?.startsAt) setLock({ startsAt: row.lock_starts_at });
+        return;
+      }
+      setLock(null);
+      await loadSlots(selectedType);
+    }
+
+    const msUntilStart = new Date(lock.startsAt).getTime() - Date.now() + 1000;
+    // setTimeout accetta al massimo ~24 giorni: per attese più lunghe basta
+    // il controllo al ritorno in primo piano.
+    const timer =
+      msUntilStart < 2 ** 31 - 1 ? setTimeout(recheckLock, Math.max(msUntilStart, 0)) : undefined;
+    function onVisible() {
+      if (document.visibilityState === "visible") recheckLock();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lock, confirmed, selectedType]);
+
   function handleTypeChange(typeName: string) {
     if (typeName === selectedType) return;
     setSelectedType(typeName);
